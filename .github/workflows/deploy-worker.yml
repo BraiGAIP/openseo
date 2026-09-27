@@ -1,0 +1,92 @@
+name: Deploy worker (Fly.io)
+
+# Builds workers/python on Fly's remote builder and deploys it.
+# Runs on every push to main that touches the worker, or manually from the Actions tab.
+#
+# Repository secrets (Settings → Secrets and variables → Actions):
+#   FLY_API_TOKEN        required – Fly.io access token
+#   DATABASE_URL         required on first deploy – Supabase transaction pooler URI (port 6543)
+#   DATAFORSEO_LOGIN     optional – without it the worker runs on mock data
+#   DATAFORSEO_PASSWORD  optional
+# Repository variable (optional): FLY_APP – app name if "openseo-workers" is taken.
+#
+# Secrets present in GitHub are copied to Fly on every run; secrets you set
+# directly in Fly (fly secrets set) are left alone.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "workers/python/**"
+      - ".github/workflows/deploy-worker.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-worker
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy rank worker
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: workers/python
+    env:
+      FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+      FLY_APP: ${{ vars.FLY_APP || 'openseo-workers' }}
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      DATAFORSEO_LOGIN: ${{ secrets.DATAFORSEO_LOGIN }}
+      DATAFORSEO_PASSWORD: ${{ secrets.DATAFORSEO_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Check configuration
+        run: |
+          if [ -z "$FLY_API_TOKEN" ]; then
+            echo "::error::Add the FLY_API_TOKEN repository secret (Fly.io → Account → Access Tokens)."
+            exit 1
+          fi
+          if [ -n "$DATAFORSEO_LOGIN" ] && [ -z "$DATAFORSEO_PASSWORD" ]; then
+            echo "::error::DATAFORSEO_LOGIN is set but DATAFORSEO_PASSWORD is missing."
+            exit 1
+          fi
+
+      - name: Create the Fly app if it does not exist
+        run: |
+          if flyctl status --app "$FLY_APP" >/dev/null 2>&1; then
+            echo "App $FLY_APP exists."
+          else
+            if [ -z "$DATABASE_URL" ]; then
+              echo "::error::First deploy needs the DATABASE_URL repository secret."
+              exit 1
+            fi
+            flyctl apps create "$FLY_APP" --org personal
+          fi
+
+      - name: Stage secrets
+        run: |
+          {
+            [ -n "$DATABASE_URL" ] && printf 'DATABASE_URL=%s\n' "$DATABASE_URL"
+            [ -n "$DATAFORSEO_LOGIN" ] && printf 'DATAFORSEO_LOGIN=%s\n' "$DATAFORSEO_LOGIN"
+            [ -n "$DATAFORSEO_PASSWORD" ] && printf 'DATAFORSEO_PASSWORD=%s\n' "$DATAFORSEO_PASSWORD"
+            true
+          } > "$RUNNER_TEMP/fly-secrets.env"
+          if [ -s "$RUNNER_TEMP/fly-secrets.env" ]; then
+            flyctl secrets import --stage --app "$FLY_APP" < "$RUNNER_TEMP/fly-secrets.env"
+          fi
+          rm -f "$RUNNER_TEMP/fly-secrets.env"
+
+      - name: Deploy
+        run: |
+          # With DataForSEO credentials in GitHub, missing credentials on Fly become a startup
+          # error instead of a silent fallback to mock data.
+          provider=auto
+          [ -n "$DATAFORSEO_LOGIN" ] && provider=dataforseo
+          flyctl deploy --remote-only --ha=false --app "$FLY_APP" --config fly.toml \
+            --env SERP_PROVIDER="$provider"
+          flyctl scale count rank=1 --app "$FLY_APP" --yes
+
+      - name: Show status
+        run: flyctl status --app "$FLY_APP"

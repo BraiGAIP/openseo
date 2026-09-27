@@ -1,5 +1,5 @@
 # Fly.io config for the OpenSEO workers.
-# Deploy:   fly deploy --config workers/python/fly.toml --dockerfile workers/python/Dockerfile workers/python
+# Deploy:   GitHub Actions (.github/workflows/deploy-worker.yml) or: cd workers/python && fly deploy --ha=false
 # Secrets:  fly secrets set DATABASE_URL=... DATAFORSEO_LOGIN=... DATAFORSEO_PASSWORD=...
 app = "openseo-workers"
 primary_region = "fra"            # same metro as Supabase eu-central-1

@@ -53,11 +53,26 @@ DATABASE_URL=postgresql://... python -m openseo_workers            # long-runnin
 
 ## Deploy (Fly.io)
 
+**From GitHub (recommended):** `.github/workflows/deploy-worker.yml` deploys on every push to
+`main` that touches `workers/python/`, or manually (Actions → *Deploy worker (Fly.io)* → Run workflow).
+It creates the app on the first run, copies secrets from GitHub to Fly and pins one `rank` machine.
+
+| Repository secret | |
+|---|---|
+| `FLY_API_TOKEN` | Fly.io → Account → Access Tokens |
+| `DATABASE_URL` | Supabase → Connect → **Transaction pooler** URI (port 6543), password filled in |
+| `DATAFORSEO_LOGIN`, `DATAFORSEO_PASSWORD` | DataForSEO → API Access (API password, not the site password) |
+
+Optional repository variable `FLY_APP` if the name `openseo-workers` is taken.
+
+**From a terminal:**
+
 ```bash
 fly apps create openseo-workers            # once
 fly secrets set --app openseo-workers \
   DATABASE_URL='<Supabase Dashboard → Connect → Transaction pooler URI (port 6543)>' \
-  DATAFORSEO_LOGIN='…' DATAFORSEO_PASSWORD='…' SERP_PROVIDER=dataforseo
-fly deploy --config workers/python/fly.toml workers/python
+  DATAFORSEO_LOGIN='…' DATAFORSEO_PASSWORD='…'
+cd workers/python && fly deploy --ha=false --env SERP_PROVIDER=dataforseo
 fly scale count rank=1 --app openseo-workers
+fly logs --app openseo-workers             # look for "SERP provider: DataForSEO"
 ```
