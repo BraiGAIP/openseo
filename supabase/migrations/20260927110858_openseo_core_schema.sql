@@ -24,8 +24,6 @@
 --     exposes a partition directly (partitions do not inherit parent RLS).
 -- =============================================================================
 
-begin;
-
 -- -----------------------------------------------------------------------------
 -- 0. Extensions & schemas
 -- -----------------------------------------------------------------------------
@@ -62,7 +60,8 @@ create type public.usage_metric as enum (
   'keyword_lookup',    -- keyword research / metrics lookup
   'audit_page',        -- one crawled page in a site audit
   'backlink_query',    -- backlink/referring-domain request
-  'ai_credit',         -- normalised LLM usage (1 credit ≈ 1k output tokens on the default model)
+  'ai_credit',         -- normalised LLM spend: 1 credit = USD 0.025 of model cost after batch
+                       -- discount, so cheap bulk models consume fewer credits than Opus
   'api_call',          -- public REST API request authenticated with an API key
   'report_render'      -- PDF / web report generation
 );
@@ -166,6 +165,7 @@ create table public.organizations (
   brand_accent_color   text check (brand_accent_color  ~ '^#[0-9a-fA-F]{6}$'),
   report_footer_text   text,
   custom_report_domain text unique check (custom_report_domain = lower(custom_report_domain)),  -- e.g. reports.agency.fi (CNAME)
+  default_locale       text not null default 'en' check (default_locale in ('en', 'fi', 'sv')),
   settings             jsonb not null default '{}'::jsonb,
   created_by           uuid default auth.uid() references auth.users (id) on delete set null,
   created_at           timestamptz not null default now(),
@@ -370,8 +370,8 @@ create table public.projects (
   domain            text not null check (domain = public.normalize_domain(domain)),
   root_url          text not null,                          -- canonical start URL for crawls
   -- Default search context for tracking/research
-  location_code     integer not null default 2246,          -- DataForSEO location code (2246 = Finland)
-  language_code     text not null default 'fi',
+  location_code     integer not null default 2840,          -- DataForSEO location code (2840 = US, 2826 = UK, 2246 = FI, 2752 = SE)
+  language_code     text not null default 'en',
   search_engine     public.search_engine not null default 'google',
   default_device    public.search_device not null default 'desktop',
   -- Client-work metadata (agency use-case)
@@ -985,6 +985,8 @@ create table public.ai_analyses (
   subject_ref       jsonb not null default '{}'::jsonb,   -- {"audit_id":..} | {"url":..} | {"keyword_ids":[..]}
   input_hash        text,                                 -- cache key: sha256(prompt_version + inputs)
   model             text,
+  model_tier        text check (model_tier in ('bulk', 'standard', 'deep')),
+  used_batch_api    boolean not null default false,
   prompt_version    text,
   output            jsonb,                                -- structured (JSON-schema validated) result
   output_markdown   text,
@@ -1019,7 +1021,7 @@ create table public.reports (
   sections          jsonb not null default '[]'::jsonb,   -- ordered widget config
   branding          jsonb not null default '{}'::jsonb,   -- snapshot of org branding at render time
   white_label       boolean not null default false,
-  locale            text not null default 'fi',
+  locale            text not null default 'en' check (locale in ('en', 'fi', 'sv')),
   html_path         text,
   pdf_path          text,
   share_token_hash  text unique,                          -- public link: /r/<token>
@@ -1898,7 +1900,7 @@ grant select on public.audit_issue_types, public.subscriptions, public.keyword_p
 
 -- Organizations: everything readable, but billing/Stripe fields are server-owned.
 grant select, delete on public.organizations to authenticated;
-grant update (name, billing_email, country_code, vat_id, brand_name, brand_logo_path,
+grant update (name, billing_email, country_code, vat_id, default_locale, brand_name, brand_logo_path,
               brand_primary_color, brand_accent_color, report_footer_text, settings)
   on public.organizations to authenticated;
 
@@ -1965,25 +1967,25 @@ grant execute on function private.run_maintenance() to service_role;
 -- 23. Seed: plans & audit checks
 -- -----------------------------------------------------------------------------
 insert into public.plans (id, name, description, is_public, sort_order, price_monthly_cents, price_yearly_cents, limits) values
-('free', 'Free', 'Omat pikkuprojektit ja kokeilu', true, 0, 0, 0, '{
+('free', 'Free', 'Side projects and evaluation', true, 0, 0, 0, '{
   "max_projects": 1, "max_keywords": 25, "max_seats": 1, "max_competitors_per_project": 2,
   "max_pages_per_audit": 250, "rank_check_min_frequency": "weekly", "rank_depth": 20,
   "api_access": false, "white_label": false, "custom_domain": false, "overage_enabled": false,
   "quota": {"serp_query": 300, "keyword_lookup": 50, "audit_page": 500, "backlink_query": 10,
             "ai_credit": 20, "api_call": 0, "report_render": 2}}'),
-('pro', 'Pro', 'Freelancerit ja omat kaupalliset sivustot', true, 10, 4900, 49000, '{
+('pro', 'Pro', 'Freelancers and in-house marketers', true, 10, 4900, 49000, '{
   "max_projects": 5, "max_keywords": 500, "max_seats": 3, "max_competitors_per_project": 10,
   "max_pages_per_audit": 5000, "rank_check_min_frequency": "daily", "rank_depth": 20,
   "api_access": true, "white_label": false, "custom_domain": false, "overage_enabled": true,
   "quota": {"serp_query": 5000, "keyword_lookup": 3000, "audit_page": 25000, "backlink_query": 200,
             "ai_credit": 200, "api_call": 10000, "report_render": 30}}'),
-('agency', 'Agency', 'Toimistot: asiakasprojektit ja white-label-raportit', true, 20, 14900, 149000, '{
+('agency', 'Agency', 'Agencies: client projects and white-label reports', true, 20, 14900, 149000, '{
   "max_projects": 40, "max_keywords": 3000, "max_seats": 10, "max_competitors_per_project": 20,
   "max_pages_per_audit": 25000, "rank_check_min_frequency": "daily", "rank_depth": 50,
   "api_access": true, "white_label": true, "custom_domain": true, "overage_enabled": true,
   "quota": {"serp_query": 30000, "keyword_lookup": 15000, "audit_page": 200000, "backlink_query": 1500,
             "ai_credit": 1200, "api_call": 100000, "report_render": 300}}'),
-('enterprise', 'Enterprise', 'Räätälöity sopimus', false, 30, 0, 0, '{
+('enterprise', 'Enterprise', 'Custom contract, SSO and SLA', false, 30, 0, 0, '{
   "max_projects": -1, "max_keywords": -1, "max_seats": -1, "max_competitors_per_project": -1,
   "max_pages_per_audit": 100000, "rank_check_min_frequency": "daily", "rank_depth": 100,
   "api_access": true, "white_label": true, "custom_domain": true, "overage_enabled": true,
@@ -2024,6 +2026,8 @@ insert into public.audit_issue_types (code, category, severity, title, descripti
 do $$
 begin
   if to_regclass('storage.buckets') is not null then
+    -- Missing policies = no client access (deny by default), so a privilege
+    -- error here is surfaced as a warning rather than aborting the migration.
     insert into storage.buckets (id, name, public)
     values ('reports', 'reports', false), ('branding', 'branding', false)
     on conflict (id) do nothing;
@@ -2054,25 +2058,7 @@ begin
              and private.has_org_role(private.try_uuid((storage.foldername(name))[1]), 'admin'))
     $p$;
   end if;
+exception when insufficient_privilege then
+  raise warning 'OpenSEO storage policies not created (%). Create them from the dashboard.', sqlerrm;
 end;
 $$;
-
--- -----------------------------------------------------------------------------
--- 25. Scheduling (only when pg_cron is enabled)
--- -----------------------------------------------------------------------------
-do $$
-begin
-  if exists (select 1 from pg_extension where extname = 'pg_cron') then
-    perform cron.schedule('openseo-enqueue-rank-checks', '*/10 * * * *',
-                          'select public.enqueue_due_rank_checks(100)');
-    perform cron.schedule('openseo-maintenance', '17 3 * * *',
-                          'select private.run_maintenance()');
-    perform cron.schedule('openseo-stripe-usage-sync', '*/15 * * * *',
-      $cmd$insert into public.jobs (queue, payload, dedupe_key)
-           values ('stripe_usage_sync', '{}'::jsonb, 'stripe_usage_sync')
-           on conflict do nothing$cmd$);
-  end if;
-end;
-$$;
-
-commit;

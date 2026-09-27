@@ -70,7 +70,7 @@ select (select keyword_normalized from public.keyword_tracking where id = :'kw_i
 select set_config('t.ok_norm', :'ok_norm', false) \g /dev/null
 reset role;
 do $$ begin assert current_setting('t.ok_norm')::boolean, 'keyword normalisation'; end $$;
-do $$ begin assert current_setting('t.kw_org')::uuid = current_setting('t.agency_id')::uuid, 'org derived from project'; assert current_setting('t.kw_loc')::int = 2246, 'default location'; end $$;
+do $$ begin assert current_setting('t.kw_org')::uuid = current_setting('t.agency_id')::uuid, 'org derived from project'; assert current_setting('t.kw_loc')::int = 2840, 'default location'; end $$;
 \echo ok 3 project + keyword, org_id derived by trigger
 
 -- 4. Bob cannot see or write Alice's data --------------------------------------

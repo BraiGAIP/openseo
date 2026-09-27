@@ -1,0 +1,15 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  db-tests:
+    name: Database migrations & RLS tests
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run migration + tenant-isolation tests (PostgreSQL 16)
+        run: ./tests/db/run.sh

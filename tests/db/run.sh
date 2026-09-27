@@ -29,6 +29,7 @@ PSQL=(psql -h "$TMP" -p "$PORT" -U postgres -v ON_ERROR_STOP=1 -X -q)
 "${PSQL[@]}" -d openseo_test -f "$HERE/supabase_stub.sql"
 for f in "$ROOT"/supabase/migrations/*.sql; do
   echo "applying $(basename "$f")"
-  "${PSQL[@]}" -d openseo_test -f "$f"
+  "${PSQL[@]}" -d openseo_test --single-transaction -f "$f"
 done
+if [ "${FINGERPRINT:-0}" = "1" ]; then "${PSQL[@]}" -d openseo_test -f "$HERE/fingerprint.sql"; exit 0; fi
 "${PSQL[@]}" -d openseo_test -f "$HERE/rls_isolation_test.sql"
