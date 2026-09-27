@@ -153,7 +153,22 @@ reset role;
 select pg_temp.as_user('00000000-0000-0000-0000-00000000000b', 'bob@client.fi');
 do $$ begin assert (select count(*) from public.keyword_positions) = 0, 'bob sees no positions'; end $$;
 reset role;
-\echo ok 7 positions partitioned, snapshot trigger, private partitions not readable
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000a', 'alice@agency.fi');
+do $$
+declare r record;
+begin
+  assert (select count(*) from public.project_rank_summary(current_setting('t.project_id')::uuid, 30)) = 2, 'two summary days';
+  select * into r from public.project_rank_summary(current_setting('t.project_id')::uuid, 30) order by check_date desc limit 1;
+  assert r.checked = 1 and r.ranked = 1 and r.avg_position = 5 and r.top10 = 1 and r.top3 = 0, 'summary ' || r::text;
+  assert r.visibility = round(100 * 0.06 / 0.28, 1), 'visibility ' || r.visibility;
+end $$;
+reset role;
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000b', 'bob@client.fi');
+do $$ begin
+  assert (select count(*) from public.project_rank_summary(current_setting('t.project_id')::uuid, 30)) = 0, 'bob gets no foreign summary';
+end $$;
+reset role;
+\echo ok 7 positions partitioned, snapshot trigger, private partitions not readable, rank summary respects RLS
 
 -- 8. Invitations & roles ------------------------------------------------------
 select pg_temp.as_user('00000000-0000-0000-0000-00000000000a', 'alice@agency.fi');

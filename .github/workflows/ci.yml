@@ -13,3 +13,19 @@ jobs:
       - uses: actions/checkout@v4
       - name: Run migration + tenant-isolation tests (PostgreSQL 16)
         run: ./tests/db/run.sh
+
+  web:
+    name: Web app (lint, typecheck, build)
+    runs-on: ubuntu-24.04
+    env:
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run build

@@ -10,7 +10,7 @@
 
 | # | Decision | Choice | Rationale |
 |---|---|---|---|
-| D1 | Frontend + BFF | **Next.js 15 (App Router) + React 19 + Tailwind + shadcn/ui** | SSR for public reports and marketing pages, Route Handlers for the public API and Stripe webhooks, one TypeScript codebase. |
+| D1 | Frontend + BFF | **Next.js 16 (App Router, Turbopack, `proxy.ts`) + React 19 + Tailwind v4 + shadcn-style components** | SSR for public reports and marketing pages, Route Handlers for the public API and Stripe webhooks, one TypeScript codebase. |
 | D2 | Database, auth, storage | **Supabase (Postgres 17, RLS, Auth, Storage, Vault, pg_cron)** — project `OpenSEO`, ref `itxtluifqbxxrealkpfj`, region **eu-central-1 (Frankfurt)** | Tenant isolation enforced in the database, managed auth/SSO, plain Postgres (no lock-in), EU data residency. |
 | D3 | Heavy work | **Python 3.12 workers** (httpx/asyncio, selectolax, Playwright, anthropic SDK) | Crawling, SERP parsing, data work and the AI pipeline fit Python best; Edge Functions have too little time/memory for crawls. |
 | D4 | Worker hosting | **Fly.io** (Machines, EU region `fra` next to the database) | Fastest to operate early on; per-second billing, autoscaling by process group. Re-evaluate Hetzner when steady-state load is known. |
@@ -49,7 +49,7 @@
 
 | Layer | Technology | Notes |
 |---|---|---|
-| UI | Next.js 15, React 19, TypeScript, Tailwind CSS v4, shadcn/ui, TanStack Query/Table | Server Components for data, client components only where interactive |
+| UI | Next.js 16, React 19, TypeScript, Tailwind CSS v4, shadcn/ui, TanStack Query/Table | Server Components for data, client components only where interactive |
 | i18n | **next-intl**, locales `en` (default), `fi`, `sv`; ICU messages in `apps/web/messages/*.json` | Locale-prefixed routes (`/fi/...`), `organizations.default_locale`, `reports.locale`, locale-aware number/date formatting |
 | Charts | **Recharts** (dashboard), **ECharts** (large time series, 10k+ points) | One palette for light/dark/print |
 | Auth | Supabase Auth (email + magic link, Google; SAML SSO for Enterprise) | JWT → RLS |
@@ -135,7 +135,7 @@ flowchart LR
 ```
 openseo/
 ├── apps/
-│   └── web/                     # Next.js 15 – UI, /api/v1, Stripe webhook, public reports
+│   └── web/                     # Next.js 16 – UI, /api/v1, Stripe webhook, public reports
 │       ├── app/[locale]/(marketing)/   # landing, pricing (reads public.plans)
 │       ├── app/[locale]/(app)/[org]/[project]/…   # rankings, keywords, competitors, audit, reports
 │       ├── app/api/v1/…         # public REST API (OpenAPI generated from zod)
