@@ -73,7 +73,7 @@ export async function getKeywords(projectId: string) {
   const { data, error } = await supabase
     .from("keyword_tracking")
     .select(
-      "id, keyword, device, location_code, search_volume, current_position, previous_position, best_position, current_url, last_check_date, depth, serp_features",
+      "id, keyword, device, location_code, search_volume, current_position, previous_position, best_position, current_url, last_check_date, last_provider, depth, serp_features",
     )
     .eq("project_id", projectId)
     .order("created_at");
@@ -101,4 +101,29 @@ export async function getPositionHistory(projectId: string, keywordIds: string[]
     .order("check_date");
   if (error) throw error;
   return data;
+}
+
+const MANUAL_CHECK_COOLDOWN_MS = 60 * 60 * 1000; // keep in sync with public.request_rank_check()
+
+/** Whether a rank check is queued/running for the project, and when "Check now" is available again. */
+export async function getRankCheckStatus(projectId: string) {
+  const supabase = await createClient();
+  const since = new Date(Date.now() - MANUAL_CHECK_COOLDOWN_MS).toISOString();
+  const { data, error } = await supabase
+    .from("jobs")
+    .select("status, payload, finished_at")
+    .eq("project_id", projectId)
+    .eq("queue", "rank_check")
+    .or(`status.in.(queued,running),finished_at.gte."${since}"`)
+    .order("created_at", { ascending: false })
+    .limit(50);
+  if (error) throw error;
+  const isManual = (payload: unknown) =>
+    typeof payload === "object" && payload !== null && (payload as { manual?: unknown }).manual === true;
+  const running = data.some((j) => j.status === "queued" || j.status === "running");
+  const lastManual = data.find((j) => j.status === "succeeded" && isManual(j.payload) && j.finished_at);
+  const availableAt = lastManual?.finished_at
+    ? new Date(new Date(lastManual.finished_at).getTime() + MANUAL_CHECK_COOLDOWN_MS).toISOString()
+    : null;
+  return { running, availableAt: availableAt && availableAt > new Date().toISOString() ? availableAt : null };
 }

@@ -3,7 +3,8 @@
 SERP: Google Organic, *advanced* results.
   - standard mode (default, cheapest): POST /v3/serp/google/organic/task_post (≤100 tasks per call),
     then GET /v3/serp/google/organic/task_get/advanced/{id} until the task is done.
-  - live mode: POST /v3/serp/google/organic/live/advanced (one task per call).
+  - live mode: POST /v3/serp/google/organic/live/advanced (one task per call, several in parallel).
+    Also used for urgent (manual "check now") requests regardless of the configured mode.
   `stop_crawl_on_match` stops crawling once the tracked domain is found, so only the pages
   up to our ranking are billed.
 Keyword data: POST /v3/keywords_data/google_ads/search_volume/live (≤1000 keywords, billed per call).
@@ -43,6 +44,7 @@ TASK_IN_QUEUE = 40602
 PENDING_CODES = {TASK_HANDED, TASK_IN_QUEUE}
 
 MAX_TASKS_PER_POST = 100
+LIVE_CONCURRENCY = 8
 MAX_KEYWORDS_PER_VOLUME_CALL = 1000
 # Google Ads limits for the search volume endpoint.
 MAX_KEYWORD_CHARS = 80
@@ -138,11 +140,23 @@ class DataForSEOProvider:
     def _store_key(self, query: SerpQuery) -> str:
         return "dataforseo:pending:" + query.cache_key(self.name, self._check_date or date.today())
 
-    async def fetch_serps(self, queries: list[SerpQuery]) -> dict[SerpQuery, SerpResult]:
+    async def fetch_serps(
+        self, queries: list[SerpQuery], *, urgent: bool = False
+    ) -> dict[SerpQuery, SerpResult]:
         unique = list(dict.fromkeys(queries))
-        if self.mode == "live":
-            return {q: await self._fetch_live(q) for q in unique}
+        if self.mode == "live" or urgent:
+            return await self._fetch_live_many(unique)
         return await self._fetch_standard(unique)
+
+    async def _fetch_live_many(self, queries: list[SerpQuery]) -> dict[SerpQuery, SerpResult]:
+        semaphore = asyncio.Semaphore(LIVE_CONCURRENCY)
+
+        async def one(query: SerpQuery) -> SerpResult:
+            async with semaphore:
+                return await self._fetch_live(query)
+
+        results = await asyncio.gather(*(one(q) for q in queries))
+        return dict(zip(queries, results, strict=True))
 
     async def _fetch_live(self, query: SerpQuery) -> SerpResult:
         body = await self._request(
@@ -214,6 +228,7 @@ class DataForSEOProvider:
                     raise ProviderError(
                         f"{len(pending)} DataForSEO task(s) still queued after {self._max_wait:.0f}s",
                         retryable=True,
+                        pending=True,
                     )
                 await self._sleep(self._poll_interval)
         return results

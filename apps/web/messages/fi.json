@@ -136,7 +136,14 @@
     "declined": "Laski {count}",
     "unchanged": "Ei muutosta",
     "remove": "Poista avainsana",
-    "selectLimit": "Voit verrata enintään 8 avainsanaa kerrallaan."
+    "selectLimit": "Voit verrata enintään 8 avainsanaa kerrallaan.",
+    "checkNow": "Tarkista nyt",
+    "checking": "Tarkistetaan…",
+    "checkingHint": "Tulokset päivittyvät automaattisesti.",
+    "checkQueued": "{count, plural, one {# avainsana} other {# avainsanaa}} jonossa. Tulokset muutamassa minuutissa.",
+    "checkAvailableAt": "Seuraava pikatarkistus klo {time}",
+    "demoBadge": "Demo",
+    "demoNotice": "Nämä sijoitukset ovat simuloituja, koska hakudatan lähdettä ei ole vielä kytketty. Oikeat sijoitukset korvaavat ne seuraavassa tarkistuksessa, kun lähde on määritetty."
   },
   "Errors": {
     "generic": "Jokin meni pieleen. Yritä uudelleen.",
@@ -144,6 +151,9 @@
     "invalidDomain": "Anna verkkotunnus muodossa esimerkki.fi.",
     "duplicate": "Tämä on jo olemassa.",
     "required": "Kenttä on pakollinen.",
-    "forbidden": "Sinulla ei ole oikeutta tähän toimintoon."
+    "forbidden": "Sinulla ei ole oikeutta tähän toimintoon.",
+    "cooldown": "Tarkistus on jo käynnissä tai tehtiin äskettäin. Yritä myöhemmin uudelleen.",
+    "noKeywords": "Lisää ensin avainsanoja.",
+    "quotaExceeded": "Tämän kuun {metric, select, serp_query {sijoitustarkistusten} audit_page {sivustoauditointien} other {käytön}} kiintiö on käytetty. Päivitä paketti jatkaaksesi."
   }
 }

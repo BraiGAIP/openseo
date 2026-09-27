@@ -44,7 +44,9 @@ class MockProvider:
         position = max(1, min(100, base + drift))
         return position if position <= query.depth else None
 
-    async def fetch_serps(self, queries: list[SerpQuery]) -> dict[SerpQuery, SerpResult]:
+    async def fetch_serps(
+        self, queries: list[SerpQuery], *, urgent: bool = False
+    ) -> dict[SerpQuery, SerpResult]:
         day = self._today or date.today()
         results: dict[SerpQuery, SerpResult] = {}
         for query in queries:

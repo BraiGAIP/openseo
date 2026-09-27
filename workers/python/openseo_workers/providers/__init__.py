@@ -16,12 +16,15 @@ from .base import (
     SerpResult,
 )
 from .dataforseo import DataForSEOProvider
+from .fallback import FallbackSerpProvider
 from .mock import MockProvider
+from .serper import SerperProvider
 
 log = logging.getLogger(__name__)
 
 __all__ = [
     "DataForSEOProvider",
+    "FallbackSerpProvider",
     "KeywordMetrics",
     "KeywordMetricsBatch",
     "MockProvider",
@@ -31,22 +34,40 @@ __all__ = [
     "SerpProvider",
     "SerpQuery",
     "SerpResult",
+    "SerperProvider",
     "build_serp_provider",
 ]
 
 
 def build_serp_provider(settings: Settings, store: PendingTaskStore | None = None) -> SerpProvider:
-    """DataForSEO when credentials are configured, otherwise the deterministic mock provider.
+    """Pick the SERP provider from the configured credentials.
 
-    SERP_PROVIDER=dataforseo makes missing credentials a hard error (production);
-    SERP_PROVIDER=mock forces the mock provider (development, demos).
+    auto:        DataForSEO (+ Serper fallback if SERPER_API_KEY is set) → Serper → mock
+    dataforseo:  DataForSEO required (+ Serper fallback); missing credentials are an error
+    serper:      Serper required (no keyword volumes)
+    mock:        deterministic demo data
     """
     if settings.serp_provider == "mock":
         log.info("SERP provider: mock (forced by SERP_PROVIDER=mock)")
         return MockProvider()
+
+    serper = (
+        SerperProvider(
+            settings.serper_api_key,
+            base_url=settings.serper_base_url,
+            cost_per_credit=settings.serper_cost_per_credit,
+        )
+        if settings.serper_api_key
+        else None
+    )
+    if settings.serp_provider == "serper":
+        if serper is None:
+            raise ConfigError("SERP_PROVIDER=serper but SERPER_API_KEY is not set")
+        log.info("SERP provider: Serper (no keyword volume data)")
+        return serper
+
     if settings.has_dataforseo_credentials:
-        log.info("SERP provider: DataForSEO (%s queue)", settings.dataforseo_mode)
-        return DataForSEOProvider(
+        dataforseo = DataForSEOProvider(
             settings.dataforseo_login or "",
             settings.dataforseo_password or "",
             mode=settings.dataforseo_mode,
@@ -56,10 +77,19 @@ def build_serp_provider(settings: Settings, store: PendingTaskStore | None = Non
             max_wait=settings.dataforseo_max_wait,
             poll_interval=settings.dataforseo_poll_interval,
         )
+        if serper is None:
+            log.info("SERP provider: DataForSEO (%s queue), no fallback", settings.dataforseo_mode)
+            return dataforseo
+        log.info("SERP provider: DataForSEO (%s queue) with Serper fallback", settings.dataforseo_mode)
+        return FallbackSerpProvider(dataforseo, serper)
     if settings.serp_provider == "dataforseo":
         raise ConfigError("SERP_PROVIDER=dataforseo but DATAFORSEO_LOGIN / DATAFORSEO_PASSWORD are not set")
+    if serper is not None:
+        log.info("SERP provider: Serper (no DataForSEO credentials; keyword volumes unavailable)")
+        return serper
     log.warning(
-        "DATAFORSEO_LOGIN / DATAFORSEO_PASSWORD not set: falling back to the MOCK provider. "
-        "Rankings written now are demo data (keyword_positions.provider = 'mock')."
+        "No SERP provider credentials (DATAFORSEO_LOGIN / DATAFORSEO_PASSWORD, SERPER_API_KEY): "
+        "falling back to the MOCK provider. Rankings written now are demo data "
+        "(keyword_positions.provider = 'mock')."
     )
     return MockProvider()

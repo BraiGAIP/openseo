@@ -25,7 +25,13 @@ from psycopg.rows import dict_row
 
 from openseo_workers.config import Settings
 from openseo_workers.db import Database, DbPendingTaskStore, Job
-from openseo_workers.providers import DataForSEOProvider, MockProvider, build_serp_provider
+from openseo_workers.providers import (
+    DataForSEOProvider,
+    FallbackSerpProvider,
+    MockProvider,
+    SerperProvider,
+    build_serp_provider,
+)
 from openseo_workers.rank.handler import RankCheckContext, handle_rank_check
 from openseo_workers.runner import Runner
 
@@ -164,14 +170,19 @@ def seeded(pg_dsn):
 class FakeDataForSEO:
     """Minimal DataForSEO v3 HTTP double: standard queue + search volume."""
 
-    def __init__(self, serp_fixture):
+    def __init__(self, serp_fixture, *, out_of_money: bool = False):
         self.serp = serp_fixture
+        self.out_of_money = out_of_money
         self.calls: list[str] = []
         self.posted_tasks = 0
 
     def __call__(self, request: httpx.Request) -> httpx.Response:
         path = request.url.path
         self.calls.append(path)
+        if self.out_of_money:
+            return httpx.Response(200, json={"status_code": 40200, "status_message": "Payment Required."})
+        if path == "/v3/serp/google/organic/live/advanced":
+            return httpx.Response(200, json=copy.deepcopy(self.serp))
         if path == "/v3/serp/google/organic/task_post":
             tasks = json.loads(request.content)
             self.posted_tasks += len(tasks)
@@ -333,3 +344,121 @@ async def test_bad_payload_fails_permanently(pg_dsn, seeded):
         rows = conn.execute("select status, last_error from public.jobs").fetchall()
     assert {r["status"] for r in rows} == {"dead"}
     assert all("no keyword_ids" in r["last_error"] for r in rows)
+
+
+def _as_user(conn, user_id: str) -> None:
+    conn.execute(
+        "select set_config('request.jwt.claims', %s, false)",
+        (json.dumps({"sub": user_id, "role": "authenticated"}),),
+    )
+    conn.execute("set role authenticated")
+
+
+async def test_check_now_skips_cache_and_uses_live_endpoint(pg_dsn, seeded, serp_fixture):
+    fake = FakeDataForSEO(serp_fixture)
+    settings = Settings(database_url=pg_dsn, worker_id="w", concurrency=1)
+    db = await Database.connect(pg_dsn, role="service_role", max_size=3)
+    client = httpx.AsyncClient(base_url="https://api.dataforseo.com", transport=httpx.MockTransport(fake))
+    provider = DataForSEOProvider("l", "p", client=client, store=DbPendingTaskStore(db), poll_interval=0)
+    try:
+        assert await Runner(settings, db, provider).run_once() == 2  # scheduled checks fill today's cache
+        with psycopg.connect(pg_dsn, autocommit=True, row_factory=dict_row) as conn:
+            _as_user(conn, USER_A)
+            queued = conn.execute(
+                "select public.request_rank_check(%s) as n", (seeded["projects"][USER_A],)
+            ).fetchone()["n"]
+            conn.execute("reset role")
+        assert queued == 1
+        assert await Runner(settings, db, provider).run_once() == 1
+    finally:
+        await client.aclose()
+        await db.close()
+
+    assert fake.calls.count("/v3/serp/google/organic/live/advanced") == 1
+    assert fake.posted_tasks == 1  # only the scheduled check used the standard queue
+    with psycopg.connect(pg_dsn, row_factory=dict_row) as conn:
+        job = conn.execute(
+            "select status, priority, result from public.jobs where (payload ->> 'manual')::boolean"
+        ).fetchone()
+        assert job["status"] == "succeeded" and job["priority"] == 10
+        assert job["result"]["manual"] is True and job["result"]["serps_fetched"] == 1
+        usage = conn.execute(
+            "select metadata from public.usage_records where metric = 'serp_query' and job_id is not null"
+            " order by id desc limit 1"
+        ).fetchone()
+        assert usage["metadata"]["scheduled"] is False
+        snapshot = conn.execute(
+            "select k.last_provider from public.keyword_tracking k where k.project_id = %s",
+            (seeded["projects"][USER_A],),
+        ).fetchone()
+        assert snapshot["last_provider"] == "dataforseo"
+
+
+def _serper_page(links: list[str], credits: int = 1) -> dict:
+    return {
+        "organic": [{"title": f"r{i}", "link": link, "position": i} for i, link in enumerate(links, start=1)],
+        "peopleAlsoAsk": [{"question": "q"}],
+        "credits": credits,
+    }
+
+
+async def test_falls_back_to_serper_when_dataforseo_fails(pg_dsn, seeded, serp_fixture):
+    dataforseo_fake = FakeDataForSEO(serp_fixture, out_of_money=True)
+    pages = {
+        1: _serper_page([f"https://other{i}.test/" for i in range(10)]),
+        2: _serper_page(
+            ["https://x.test/", "https://y.test/", "https://blog.example-ev.com/ev-battery-life"]
+        ),
+    }
+    serper_calls: list[dict] = []
+
+    def serper_handler(request: httpx.Request) -> httpx.Response:
+        body = json.loads(request.content)
+        serper_calls.append(body)
+        assert request.headers["X-API-KEY"] == "sk"
+        return httpx.Response(200, json=pages[body["page"]])
+
+    settings = Settings(database_url=pg_dsn, worker_id="w", concurrency=1)
+    db = await Database.connect(pg_dsn, role="service_role", max_size=3)
+    dfs_client = httpx.AsyncClient(
+        base_url="https://api.dataforseo.com", transport=httpx.MockTransport(dataforseo_fake)
+    )
+    serper_client = httpx.AsyncClient(
+        base_url="https://google.serper.dev",
+        headers={"X-API-KEY": "sk"},
+        transport=httpx.MockTransport(serper_handler),
+    )
+    provider = FallbackSerpProvider(
+        DataForSEOProvider("l", "p", client=dfs_client, store=DbPendingTaskStore(db), poll_interval=0),
+        SerperProvider("sk", client=serper_client),
+    )
+    try:
+        assert await Runner(settings, db, provider).run_once() == 2
+    finally:
+        await dfs_client.aclose()
+        await serper_client.aclose()
+        await db.close()
+
+    # One SERP (2 pages) for both tenants: the second job hits today's cache.
+    assert [c["page"] for c in serper_calls] == [1, 2]
+    assert serper_calls[0] == {"q": "EV battery warranty", "gl": "us", "hl": "en", "num": 10, "page": 1}
+    with psycopg.connect(pg_dsn, row_factory=dict_row) as conn:
+        assert {r["status"] for r in conn.execute("select status from public.jobs")} == {"succeeded"}
+        rows = conn.execute(
+            "select p.position, p.url, p.provider, p.serp_features, k.last_provider, k.search_volume"
+            " from public.keyword_positions p join public.keyword_tracking k on k.id = p.keyword_id"
+        ).fetchall()
+        assert len(rows) == 2
+        for r in rows:
+            assert (r["position"], r["provider"], r["last_provider"]) == (13, "serper", "serper")
+            assert r["url"] == "https://blog.example-ev.com/ev-battery-life"
+            assert r["serp_features"] == ["people_also_ask"]
+            assert r["search_volume"] is None  # volume lookup failed: skipped, not cached as "no data"
+        assert conn.execute("select count(*) as n from private.keyword_metrics").fetchone()["n"] == 0
+        usage = conn.execute(
+            "select quantity, provider, provider_cost_usd from public.usage_records"
+            " where metric = 'serp_query'"
+        ).fetchall()
+        assert [(u["quantity"], u["provider"], float(u["provider_cost_usd"])) for u in usage] == [
+            (2, "serper", 0.002)
+        ]

@@ -12,9 +12,21 @@ Background workers that consume the Postgres job queue (`public.jobs`) through t
 | Provider | When | Notes |
 |---|---|---|
 | **DataForSEO** (`providers/dataforseo.py`) | `DATAFORSEO_LOGIN` + `DATAFORSEO_PASSWORD` set | Google Organic *advanced* results. `standard` mode (default, cheapest): `task_post` → poll `task_get/advanced/{id}`; `live` mode: `live/advanced`. `stop_crawl_on_match` stops crawling once the tracked domain is found (billed per page crawled). Keyword metrics: `keywords_data/google_ads/search_volume/live` (≤1000 keywords per call). |
+| **Serper** (`providers/serper.py`) | `SERPER_API_KEY` set: fallback when DataForSEO fails, or the only provider without DataForSEO credentials | serper.dev Google Search API, paged 10 results at a time until the tracked domain is found (1 credit per page). Desktop results only, country-level locations, no AI Overview citations and no search volume. |
 | **Mock** (`providers/mock.py`) | no credentials (automatic fallback) or `SERP_PROVIDER=mock` | Deterministic demo data, zero cost. Rows are stored with `provider = 'mock'`. |
 
 `SERP_PROVIDER=dataforseo` makes missing credentials a startup error (use it in production).
+
+**Fallback chain** (`providers/fallback.py`): with both DataForSEO credentials and `SERPER_API_KEY`,
+a failed DataForSEO request (outage, auth, out of balance) is retried on Serper within the same job.
+Queued DataForSEO tasks that are merely slow are *not* a fallback case: the job is retried later and
+resumes polling. Positions keep the provider that produced them (`keyword_positions.provider`).
+If the keyword volume lookup fails, positions are still tracked and volumes are retried next run.
+
+**Manual checks** ("Check now" in the web app, `public.request_rank_check()`): jobs with
+`"manual": true` skip today's SERP cache and use DataForSEO's live endpoint (several requests in
+parallel) instead of the standard queue. One manual check per project per hour; the database
+checks the monthly `serp_query` quota before queueing.
 
 Cost/robustness details:
 - SERPs are cached per day in `private.provider_cache` (shared across tenants tracking the same keyword/market/domain).
@@ -30,11 +42,13 @@ Cost/robustness details:
 | `DB_ROLE` | `service_role` | Role assumed with `SET LOCAL ROLE` in every transaction |
 | `QUEUES` / `--queues` | `rank_check` | Comma-separated |
 | `WORKER_CONCURRENCY` | `4` | Jobs processed in parallel |
-| `SERP_PROVIDER` | `auto` | `auto` / `dataforseo` / `mock` |
+| `SERP_PROVIDER` | `auto` | `auto` / `dataforseo` / `serper` / `mock` |
 | `DATAFORSEO_LOGIN`, `DATAFORSEO_PASSWORD` | – | API credentials (HTTP Basic) |
-| `DATAFORSEO_MODE` | `standard` | `standard` or `live` |
+| `DATAFORSEO_MODE` | `standard` | `standard` or `live` (manual checks always use live) |
 | `DATAFORSEO_STOP_ON_MATCH` | `true` | Stop SERP crawl at the tracked domain |
 | `DATAFORSEO_MAX_WAIT` | `900` | Seconds to wait for queued tasks before retrying the job |
+| `SERPER_API_KEY` | – | serper.dev API key (fallback provider) |
+| `SERPER_COST_PER_CREDIT` | `0.001` | USD per Serper credit, for cost reporting |
 | `KEYWORD_METRICS_MAX_AGE_DAYS` | `30` | Refresh interval for search volume |
 
 ## Development
@@ -62,6 +76,7 @@ It creates the app on the first run, copies secrets from GitHub to Fly and pins 
 | `FLY_API_TOKEN` | Fly.io → Account → Access Tokens |
 | `DATABASE_URL` | Supabase → Connect → **Transaction pooler** URI (port 6543), password filled in |
 | `DATAFORSEO_LOGIN`, `DATAFORSEO_PASSWORD` | DataForSEO → API Access (API password, not the site password) |
+| `SERPER_API_KEY` (optional) | serper.dev → API Key; enables the fallback provider |
 
 Optional repository variable `FLY_APP` if the name `openseo-workers` is taken.
 

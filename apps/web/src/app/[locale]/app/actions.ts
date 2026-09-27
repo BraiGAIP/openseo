@@ -130,6 +130,17 @@ export async function deleteKeyword(projectId: string, keywordId: string): Promi
   return { ok: true };
 }
 
+export async function requestRankCheck(projectId: string): Promise<FormState> {
+  await requireUser();
+  const parsed = z.uuid().safeParse(projectId);
+  if (!parsed.success) return { error: { code: "required" } };
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("request_rank_check", { p_project_id: parsed.data });
+  if (error) return { error: toActionError(error) };
+  revalidatePath(`/[locale]/app/[org]/projects/[projectId]`, "page");
+  return { ok: true, count: data };
+}
+
 const historySchema = z.object({
   projectId: z.uuid(),
   keywordIds: z.array(z.uuid()).max(8),

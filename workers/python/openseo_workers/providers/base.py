@@ -10,12 +10,24 @@ from typing import Any, Protocol
 
 
 class ProviderError(RuntimeError):
-    """A provider call failed. `retryable` decides whether the job is retried."""
+    """A provider call failed. `retryable` decides whether the job is retried.
 
-    def __init__(self, message: str, *, retryable: bool = True, status_code: int | None = None):
+    `pending` marks work that was accepted but is not finished yet (queued provider tasks):
+    retrying later is cheaper than falling back to another provider.
+    """
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        retryable: bool = True,
+        status_code: int | None = None,
+        pending: bool = False,
+    ):
         super().__init__(message)
         self.retryable = retryable
         self.status_code = status_code
+        self.pending = pending
 
 
 def normalize_domain(value: str) -> str:
@@ -145,7 +157,11 @@ class PendingTaskStore(Protocol):
 class SerpProvider(Protocol):
     name: str
 
-    async def fetch_serps(self, queries: list[SerpQuery]) -> dict[SerpQuery, SerpResult]: ...
+    async def fetch_serps(
+        self, queries: list[SerpQuery], *, urgent: bool = False
+    ) -> dict[SerpQuery, SerpResult]:
+        """Fetch SERPs. `urgent` (manual "check now") trades cost for latency where the provider can."""
+        ...
 
     async def keyword_metrics(
         self, keywords: list[str], location_code: int, language_code: str

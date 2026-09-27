@@ -1,11 +1,15 @@
 """rank_check job: fetch SERPs for a batch of tracked keywords and store positions.
 
-Payload (written by public.enqueue_due_rank_checks()):
-    {"keyword_ids": ["<uuid>", ...], "check_date": "YYYY-MM-DD"}
+Payload (written by public.enqueue_due_rank_checks() and public.request_rank_check()):
+    {"keyword_ids": ["<uuid>", ...], "check_date": "YYYY-MM-DD", "manual": true?}
+
+Manual jobs ("check now") skip today's SERP cache and ask the provider for its fastest
+mode (DataForSEO live endpoint); the fresh results are cached for later jobs.
 
 Steps
   1. Load the active keywords with their project domain.
   2. Refresh stale market metrics (search volume, CPC, competition) — shared cache first.
+     A failing metrics lookup is logged and skipped; it never blocks rank tracking.
   3. Build one SerpQuery per distinct (keyword, market, device, depth, domain); reuse
      today's cached SERPs, fetch the rest from the provider, cache them.
   4. Upsert keyword_positions (the DB trigger refreshes the keyword snapshot).
@@ -22,7 +26,14 @@ from decimal import Decimal
 from typing import Any
 
 from ..db import Database, Job
-from ..providers.base import KeywordMetrics, SerpProvider, SerpQuery, SerpResult, normalize_keyword
+from ..providers.base import (
+    KeywordMetrics,
+    ProviderError,
+    SerpProvider,
+    SerpQuery,
+    SerpResult,
+    normalize_keyword,
+)
 
 log = logging.getLogger(__name__)
 
@@ -49,6 +60,7 @@ async def handle_rank_check(job: Job, ctx: RankCheckContext) -> dict[str, Any]:
     except ValueError as exc:
         raise PermanentJobError(f"invalid check_date: {job.payload.get('check_date')!r}") from exc
 
+    manual = job.payload.get("manual") is True
     keywords = await ctx.db.fetch_keywords(keyword_ids)
     if not keywords:
         return {"checked": 0, "skipped": "no active keywords"}
@@ -68,12 +80,12 @@ async def handle_rank_check(job: Job, ctx: RankCheckContext) -> dict[str, Any]:
         )
     queries = list(dict.fromkeys(query_for.values()))
     keys = {q: q.cache_key(ctx.provider.name, check_date) for q in queries}
-    cached = await ctx.db.get_cached(list(keys.values()))
+    cached = {} if manual else await ctx.db.get_cached(list(keys.values()))
     results: dict[SerpQuery, SerpResult] = {
         q: SerpResult.from_json(cached[k]) for q, k in keys.items() if k in cached
     }
     to_fetch = [q for q in queries if q not in results]
-    fetched = await ctx.provider.fetch_serps(to_fetch) if to_fetch else {}
+    fetched = await ctx.provider.fetch_serps(to_fetch, urgent=manual) if to_fetch else {}
     for query, result in fetched.items():
         await ctx.db.put_cached(
             keys[query],
@@ -115,6 +127,7 @@ async def handle_rank_check(job: Job, ctx: RankCheckContext) -> dict[str, Any]:
     pages_by_org: dict[str, int] = defaultdict(int)
     cost_by_org: dict[str, Decimal] = defaultdict(Decimal)
     project_by_org: dict[str, str] = {}
+    provider_by_org: dict[str, str] = {}
     charged: set[SerpQuery] = set()
     for kw in keywords:
         query = query_for[kw["id"]]
@@ -123,6 +136,7 @@ async def handle_rank_check(job: Job, ctx: RankCheckContext) -> dict[str, Any]:
             pages_by_org[kw["organization_id"]] += max(1, fetched[query].pages_crawled)
             cost_by_org[kw["organization_id"]] += fetched[query].cost_usd
             project_by_org.setdefault(kw["organization_id"], kw["project_id"])
+            provider_by_org.setdefault(kw["organization_id"], fetched[query].provider)
     for org_id, pages in pages_by_org.items():
         await ctx.db.record_usage(
             organization_id=org_id,
@@ -131,14 +145,16 @@ async def handle_rank_check(job: Job, ctx: RankCheckContext) -> dict[str, Any]:
             idempotency_key=f"job:{job.id}:serp_query:{org_id}",
             project_id=project_by_org[org_id],
             job_id=job.id,
-            provider=ctx.provider.name,
+            provider=provider_by_org[org_id],
             provider_cost_usd=cost_by_org[org_id],
-            metadata={"queue": "rank_check", "check_date": check_date.isoformat(), "scheduled": True},
+            metadata={"queue": "rank_check", "check_date": check_date.isoformat(), "scheduled": not manual},
         )
 
     total_cost = sum((r.cost_usd for r in fetched.values()), Decimal("0"))
     summary = {
         "provider": ctx.provider.name,
+        "providers_used": sorted({r.provider for r in fetched.values()}),
+        "manual": manual,
         "check_date": check_date.isoformat(),
         "checked": len(rows),
         "ranked": ranked,
@@ -165,7 +181,12 @@ async def _refresh_metrics(job: Job, ctx: RankCheckContext, keywords: list[dict[
         fresh = await ctx.db.get_fresh_metrics(names, location_code, language_code, stale_after)
         missing = [k for k in names if normalize_keyword(k) not in fresh]
         if missing:
-            batch = await ctx.provider.keyword_metrics(missing, location_code, language_code)
+            try:
+                batch = await ctx.provider.keyword_metrics(missing, location_code, language_code)
+            except ProviderError as exc:
+                log.warning("keyword metrics unavailable for job %s (%s); tracking anyway", job.id, exc)
+                await ctx.db.apply_metrics_to_keywords([kw["id"] for kw in group])
+                continue
             # Cache "no data" too (Google Ads omits some keywords), otherwise we'd pay again every run.
             returned = {normalize_keyword(m.keyword) for m in batch.metrics}
             batch.metrics.extend(

@@ -136,7 +136,14 @@
     "declined": "Försämrad med {count}",
     "unchanged": "Oförändrad",
     "remove": "Ta bort sökord",
-    "selectLimit": "Du kan jämföra upp till 8 sökord åt gången."
+    "selectLimit": "Du kan jämföra upp till 8 sökord åt gången.",
+    "checkNow": "Kontrollera nu",
+    "checking": "Kontrollerar…",
+    "checkingHint": "Resultaten uppdateras automatiskt.",
+    "checkQueued": "{count, plural, one {# sökord} other {# sökord}} i kö. Resultat om några minuter.",
+    "checkAvailableAt": "Nästa manuella kontroll kl. {time}",
+    "demoBadge": "Demo",
+    "demoNotice": "De här placeringarna är simulerade eftersom ingen sökdatakälla är ansluten ännu. Riktiga placeringar ersätter dem vid nästa kontroll när en källa har konfigurerats."
   },
   "Errors": {
     "generic": "Något gick fel. Försök igen.",
@@ -144,6 +151,9 @@
     "invalidDomain": "Ange en domän som exempel.se.",
     "duplicate": "Det finns redan.",
     "required": "Fältet är obligatoriskt.",
-    "forbidden": "Du har inte behörighet till detta."
+    "forbidden": "Du har inte behörighet till detta.",
+    "cooldown": "En kontroll körs redan eller kördes nyligen. Försök igen senare.",
+    "noKeywords": "Lägg till sökord först.",
+    "quotaExceeded": "Månadens kvot för {metric, select, serp_query {rankningskontroller} audit_page {webbplatsgranskningar} other {användning}} är slut. Uppgradera för att fortsätta."
   }
 }

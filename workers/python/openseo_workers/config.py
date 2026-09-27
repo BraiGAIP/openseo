@@ -4,6 +4,7 @@ import os
 import socket
 from collections.abc import Mapping
 from dataclasses import dataclass, field
+from decimal import Decimal
 from typing import Literal
 
 
@@ -29,8 +30,9 @@ class Settings:
     # and drops to `service_role`). Empty = keep the connecting role.
     db_role: str | None = "service_role"
 
-    # "auto" = DataForSEO when credentials exist, otherwise the mock provider.
-    serp_provider: Literal["auto", "dataforseo", "mock"] = "auto"
+    # "auto" = DataForSEO when credentials exist (Serper as fallback when its key is set),
+    # else Serper alone, else the mock provider.
+    serp_provider: Literal["auto", "dataforseo", "serper", "mock"] = "auto"
     dataforseo_login: str | None = None
     dataforseo_password: str | None = None
     dataforseo_mode: Literal["standard", "live"] = "standard"
@@ -39,6 +41,10 @@ class Settings:
     dataforseo_poll_interval: float = 10.0
     # Stop crawling the SERP once the tracked domain is found (billed per page crawled).
     dataforseo_stop_on_match: bool = True
+
+    serper_api_key: str | None = None
+    serper_base_url: str = "https://google.serper.dev"
+    serper_cost_per_credit: Decimal = Decimal("0.001")
 
     keyword_metrics_max_age_days: int = 30
 
@@ -54,8 +60,8 @@ class Settings:
             raise ConfigError("DATABASE_URL is required")
 
         provider = env.get("SERP_PROVIDER", "auto").strip().lower() or "auto"
-        if provider not in {"auto", "dataforseo", "mock"}:
-            raise ConfigError(f"SERP_PROVIDER must be auto, dataforseo or mock (got {provider!r})")
+        if provider not in {"auto", "dataforseo", "serper", "mock"}:
+            raise ConfigError(f"SERP_PROVIDER must be auto, dataforseo, serper or mock (got {provider!r})")
         mode = env.get("DATAFORSEO_MODE", "standard").strip().lower() or "standard"
         if mode not in {"standard", "live"}:
             raise ConfigError(f"DATAFORSEO_MODE must be standard or live (got {mode!r})")
@@ -80,6 +86,11 @@ class Settings:
                 env.get("DATAFORSEO_POLL_INTERVAL", defaults.dataforseo_poll_interval)
             ),
             dataforseo_stop_on_match=_bool(env.get("DATAFORSEO_STOP_ON_MATCH"), True),
+            serper_api_key=env.get("SERPER_API_KEY") or None,
+            serper_base_url=env.get("SERPER_BASE_URL", defaults.serper_base_url).rstrip("/"),
+            serper_cost_per_credit=Decimal(
+                env.get("SERPER_COST_PER_CREDIT", str(defaults.serper_cost_per_credit))
+            ),
             keyword_metrics_max_age_days=int(
                 env.get("KEYWORD_METRICS_MAX_AGE_DAYS", defaults.keyword_metrics_max_age_days)
             ),

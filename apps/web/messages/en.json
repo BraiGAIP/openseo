@@ -136,7 +136,14 @@
     "declined": "Declined by {count}",
     "unchanged": "No change",
     "remove": "Remove keyword",
-    "selectLimit": "You can compare up to 8 keywords at once."
+    "selectLimit": "You can compare up to 8 keywords at once.",
+    "checkNow": "Check now",
+    "checking": "Checking…",
+    "checkingHint": "Results update automatically.",
+    "checkQueued": "{count, plural, one {# keyword} other {# keywords}} queued. Results in a few minutes.",
+    "checkAvailableAt": "Next manual check available at {time}",
+    "demoBadge": "Demo",
+    "demoNotice": "These rankings are simulated because no search data provider is connected yet. Real positions replace them on the next check once a provider is configured."
   },
   "Errors": {
     "generic": "Something went wrong. Please try again.",
@@ -144,6 +151,9 @@
     "invalidDomain": "Enter a domain like example.com.",
     "duplicate": "That already exists.",
     "required": "This field is required.",
-    "forbidden": "You don't have permission to do that."
+    "forbidden": "You don't have permission to do that.",
+    "cooldown": "A check is already running or ran recently. Try again later.",
+    "noKeywords": "Add keywords first.",
+    "quotaExceeded": "This month's {metric, select, serp_query {ranking check} audit_page {site audit} other {usage}} quota is used up. Upgrade to continue."
   }
 }

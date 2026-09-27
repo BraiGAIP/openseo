@@ -8,6 +8,7 @@ name: Deploy worker (Fly.io)
 #   DATABASE_URL         required on first deploy – Supabase transaction pooler URI (port 6543)
 #   DATAFORSEO_LOGIN     optional – without it the worker runs on mock data
 #   DATAFORSEO_PASSWORD  optional
+#   SERPER_API_KEY       optional – fallback SERP provider (serper.dev) if DataForSEO fails
 # Repository variable (optional): FLY_APP – app name if "openseo-workers" is taken.
 #
 # Secrets present in GitHub are copied to Fly on every run; secrets you set
@@ -38,6 +39,7 @@ jobs:
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
       DATAFORSEO_LOGIN: ${{ secrets.DATAFORSEO_LOGIN }}
       DATAFORSEO_PASSWORD: ${{ secrets.DATAFORSEO_PASSWORD }}
+      SERPER_API_KEY: ${{ secrets.SERPER_API_KEY }}
     steps:
       - uses: actions/checkout@v4
       - uses: superfly/flyctl-actions/setup-flyctl@master
@@ -71,6 +73,7 @@ jobs:
             [ -n "$DATABASE_URL" ] && printf 'DATABASE_URL=%s\n' "$DATABASE_URL"
             [ -n "$DATAFORSEO_LOGIN" ] && printf 'DATAFORSEO_LOGIN=%s\n' "$DATAFORSEO_LOGIN"
             [ -n "$DATAFORSEO_PASSWORD" ] && printf 'DATAFORSEO_PASSWORD=%s\n' "$DATAFORSEO_PASSWORD"
+            [ -n "$SERPER_API_KEY" ] && printf 'SERPER_API_KEY=%s\n' "$SERPER_API_KEY"
             true
           } > "$RUNNER_TEMP/fly-secrets.env"
           if [ -s "$RUNNER_TEMP/fly-secrets.env" ]; then

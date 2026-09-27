@@ -733,6 +733,7 @@ export type Database = {
           keyword_normalized: string | null
           language_code: string
           last_check_date: string | null
+          last_provider: string | null
           location_code: number
           metrics_updated_at: string | null
           monthly_searches: Json | null
@@ -766,6 +767,7 @@ export type Database = {
           keyword_normalized?: string | null
           language_code: string
           last_check_date?: string | null
+          last_provider?: string | null
           location_code: number
           metrics_updated_at?: string | null
           monthly_searches?: Json | null
@@ -799,6 +801,7 @@ export type Database = {
           keyword_normalized?: string | null
           language_code?: string
           last_check_date?: string | null
+          last_provider?: string | null
           location_code?: number
           metrics_updated_at?: string | null
           monthly_searches?: Json | null
@@ -1546,6 +1549,7 @@ export type Database = {
           used: number
         }[]
       }
+      request_rank_check: { Args: { p_project_id: string }; Returns: number }
       request_site_audit: {
         Args: { p_config?: Json; p_project_id: string }
         Returns: string

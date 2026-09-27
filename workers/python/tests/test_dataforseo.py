@@ -168,6 +168,32 @@ async def test_live_mode_sends_one_task_per_request(serp_fixture):
     assert seen == ["/v3/serp/google/organic/live/advanced"] * 2
 
 
+async def test_urgent_requests_use_live_endpoint_in_standard_mode(serp_fixture):
+    seen = []
+
+    def handler(request):
+        seen.append(request.url.path)
+        return httpx.Response(200, json=serp_fixture)
+
+    provider, _ = make_provider(handler, mode="standard", store=MemoryStore())
+    results = await provider.fetch_serps([QUERY], urgent=True)
+    assert results[QUERY].find("example-ev.com").rank_group == 12
+    assert seen == ["/v3/serp/google/organic/live/advanced"]
+
+
+async def test_queue_timeout_is_pending_not_a_fallback_case():
+    def handler(request):
+        if request.url.path.endswith("task_post"):
+            body = [{"id": "t1", "status_code": 20100, "data": {"tag": "0"}}]
+            return httpx.Response(200, json=envelope(body))
+        return httpx.Response(200, json=envelope([{"id": "t1", "status_code": 40602}]))
+
+    provider, _ = make_provider(handler, store=MemoryStore(), max_wait=30)
+    with pytest.raises(ProviderError) as exc:
+        await provider.fetch_serps([QUERY])
+    assert exc.value.pending and exc.value.retryable
+
+
 @pytest.mark.parametrize(
     ("response", "retryable"),
     [
