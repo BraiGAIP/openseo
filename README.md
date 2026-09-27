@@ -22,7 +22,7 @@ Billing Meters). UI in English with Finnish and Swedish translations.
 | `supabase/migrations/` | Multi-tenant schema with Row Level Security |
 | `tests/db/` | Migration + RLS tests on plain PostgreSQL, schema fingerprint |
 | `apps/web/` | Next.js 16 app: i18n (en/fi/sv), magic-link auth, workspaces, projects, keywords, rank dashboard |
-| `workers/python/` | Background workers (rank checks, crawler, AI, PDF) — phase 1 |
+| `workers/python/` | Python workers on Fly.io: rank tracking via DataForSEO (mock fallback), job runner, Dockerfile, fly.toml |
 | `packages/shared/` | Generated Supabase types, locales, plan limit types |
 
 ## Database

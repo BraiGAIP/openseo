@@ -1,0 +1,30 @@
+# Fly.io config for the OpenSEO workers.
+# Deploy:   fly deploy --config workers/python/fly.toml --dockerfile workers/python/Dockerfile workers/python
+# Secrets:  fly secrets set DATABASE_URL=... DATAFORSEO_LOGIN=... DATAFORSEO_PASSWORD=...
+app = "openseo-workers"
+primary_region = "fra"            # same metro as Supabase eu-central-1
+kill_signal = "SIGTERM"
+kill_timeout = 300                # finish in-flight jobs (runner stops claiming on SIGTERM)
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  LOG_LEVEL = "INFO"
+  DB_ROLE = "service_role"
+  SERP_PROVIDER = "auto"          # DataForSEO when credentials are set, otherwise mock
+  DATAFORSEO_MODE = "standard"    # cheapest queue; "live" costs ~3x
+  DATAFORSEO_STOP_ON_MATCH = "true"
+  DATAFORSEO_MAX_WAIT = "900"
+  WORKER_CONCURRENCY = "4"
+  POLL_INTERVAL = "5"
+
+# One process group per workload so each scales and sizes independently.
+# Later phases add: crawl (site_audit, Playwright), render (report_render), ai (ai_analysis).
+[processes]
+  rank = "python -m openseo_workers --queues rank_check"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"
+  processes = ["rank"]

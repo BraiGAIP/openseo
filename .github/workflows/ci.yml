@@ -29,3 +29,29 @@ jobs:
       - run: npm run lint
       - run: npm run typecheck
       - run: npm run build
+
+  worker:
+    name: Python worker (ruff, pytest incl. Postgres e2e)
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: workers/python
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: workers/python/pyproject.toml
+      - run: pip install -e ".[dev]"
+      - run: ruff check .
+      - run: ruff format --check .
+      - run: pytest -q
+
+  worker-image:
+    name: Worker Docker image
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t openseo-workers:ci workers/python
+      - run: docker run --rm openseo-workers:ci python -c "import openseo_workers, httpx, psycopg, psycopg_pool"

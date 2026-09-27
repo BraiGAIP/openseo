@@ -1,6 +1,7 @@
 # OpenSEO – istuntoraportti 27.9.2026
 
 > **Tarkoitus:** tästä tiedostosta uusi Claude Code -istunto jatkaa suoraan.
+> **Päivitys:** vaihe 1b (Python-worker) on valmis – katso `docs/handoff/2026-09-27-session-report-phase-1b.md`.
 > **Sijainti:** repo `BraiGAIP/openseo`, haara `claude/phase-1-mvp`, polku `docs/handoff/2026-09-27-session-report.md`.
 > Kun haaran PR on mergetty, sama tiedosto löytyy `main`-haarasta.
 

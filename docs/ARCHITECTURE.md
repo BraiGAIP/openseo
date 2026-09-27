@@ -329,9 +329,10 @@ The **router** chooses: (1) the organization's BYOK key if configured (`integrat
 **Important change:** Google effectively removed `num=100` in September 2025, so providers now bill **per 10-result page**. Tracking the top 100 costs ~7–10× the top 10. Hence:
 
 ### 8.3 Rank-tracking cost strategy
-- **Adaptive depth:** check daily only as deep as the keyword last ranked + one page (rank 14 → depth 20). Unranked → top 20 daily + top 100 weekly.
+- **Stop at our domain (`stop_crawl_on_match`, implemented):** each task asks DataForSEO to stop crawling once the project domain (incl. subdomains) is found, so only the pages up to our ranking are billed — rank 3 costs one page even with `depth` 100. `keyword_tracking.depth` caps the crawl for keywords we don't rank for.
 - **Standard queue** (not Live) — results within hours, fine for daily tracking. Live only for the "check now" button (consumes `serp_query` quota).
-- **Cross-tenant de-duplication:** same keyword + location + language + device on the same day → one provider call, shared via `provider_cache` (the SERP is identical for everyone; only the tenant's own domain is extracted).
+- **Cross-tenant de-duplication (implemented):** same keyword + market + device + domain on the same day → one provider call, shared via `provider_cache` (e.g. an agency and its client tracking the same site). With `stop_crawl_on_match` the crawl depends on the domain, so the domain is part of the cache key.
+- **Resumable tasks (implemented):** standard-queue task ids are stored in `provider_cache`; a retried job resumes polling instead of posting (and paying for) new tasks.
 - **Estimate for Pro:** 500 keywords × 30 days × ~1.4 pages ≈ 21,000 SERP pages ≈ **USD 12–16 / month**.
 
 ### 8.4 Site-audit crawler
