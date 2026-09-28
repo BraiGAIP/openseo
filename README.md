@@ -43,6 +43,22 @@ supabase db push
 only applies new migrations. Compare `tests/db/fingerprint.sql` run against
 production with the local fingerprint to detect drift.
 
+## Deploy (Fly.io, region `fra`)
+
+Both apps deploy from GitHub Actions when `main` changes (or manually: Actions → *Run workflow*).
+
+| App | Workflow | Config | Cost (approx.) |
+|---|---|---|---|
+| Web (`openseo-web`) | `.github/workflows/deploy-web.yml` | `apps/web/fly.toml`, `apps/web/Dockerfile` (context: repo root) | $0–4/month: sleeps when idle |
+| Worker (`openseo-workers`) | `.github/workflows/deploy-worker.yml` | `workers/python/fly.toml` | ~$3.3/month: always on |
+
+Repository secrets: `FLY_API_TOKEN`, `DATABASE_URL`, `DATAFORSEO_LOGIN`, `DATAFORSEO_PASSWORD`,
+optional `SERPER_API_KEY`. Details in `workers/python/README.md`.
+
+After the first web deploy, add the site URL to Supabase → Authentication → URL Configuration
+(*Site URL* `https://openseo-web.fly.dev`, *Redirect URLs* `https://openseo-web.fly.dev/**`),
+otherwise magic links point to localhost.
+
 ## License
 
 [GNU Affero General Public License v3.0](LICENSE). If you run a modified version

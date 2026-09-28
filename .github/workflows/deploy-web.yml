@@ -1,0 +1,71 @@
+name: Deploy web app (Fly.io)
+
+# Builds apps/web on Fly's remote builder and deploys it.
+# Runs on every push to main that touches the web app, or manually from the Actions tab.
+#
+# Repository secret:   FLY_API_TOKEN (same token as the worker deploy)
+# Optional variables:  FLY_WEB_APP – app name if "openseo-web" is taken
+#                      SITE_URL    – public URL once a custom domain is set up
+#                                    (default https://<app>.fly.dev)
+# Supabase public URL and publishable key are in apps/web/fly.toml.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/web/**"
+      - "packages/shared/**"
+      - "package-lock.json"
+      - ".dockerignore"
+      - ".github/workflows/deploy-web.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-web
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy web app
+    runs-on: ubuntu-24.04
+    env:
+      FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+      FLY_WEB_APP: ${{ vars.FLY_WEB_APP || 'openseo-web' }}
+      SITE_URL: ${{ vars.SITE_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Check configuration
+        run: |
+          if [ -z "$FLY_API_TOKEN" ]; then
+            echo "::error::Add the FLY_API_TOKEN repository secret (Fly.io → Account → Access Tokens)."
+            exit 1
+          fi
+
+      - name: Create the Fly app if it does not exist
+        run: |
+          if flyctl status --app "$FLY_WEB_APP" >/dev/null 2>&1; then
+            echo "App $FLY_WEB_APP exists."
+          else
+            flyctl apps create "$FLY_WEB_APP" --org personal
+          fi
+
+      - name: Deploy
+        run: |
+          site_url="${SITE_URL:-https://$FLY_WEB_APP.fly.dev}"
+          flyctl deploy . --remote-only --ha=false --app "$FLY_WEB_APP" \
+            --config apps/web/fly.toml --dockerfile apps/web/Dockerfile \
+            --build-arg NEXT_PUBLIC_SITE_URL="$site_url" --env NEXT_PUBLIC_SITE_URL="$site_url"
+          echo "### Web app deployed: $site_url" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Smoke test
+        run: |
+          site_url="${SITE_URL:-https://$FLY_WEB_APP.fly.dev}"
+          for i in 1 2 3 4 5 6; do
+            code=$(curl -s -o /dev/null -w '%{http_code}' "$site_url/fi" || true)
+            [ "$code" = "200" ] && { echo "$site_url/fi → 200"; exit 0; }
+            sleep 10
+          done
+          echo "::error::$site_url/fi returned $code"
+          exit 1
