@@ -153,7 +153,42 @@ reset role;
 select pg_temp.as_user('00000000-0000-0000-0000-00000000000b', 'bob@client.fi');
 do $$ begin assert (select count(*) from public.keyword_positions) = 0, 'bob sees no positions'; end $$;
 reset role;
-\echo ok 7 positions partitioned, snapshot trigger, private partitions not readable
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000a', 'alice@agency.fi');
+do $$
+declare r record;
+begin
+  assert (select count(*) from public.project_rank_summary(current_setting('t.project_id')::uuid, 30)) = 2, 'two summary days';
+  select * into r from public.project_rank_summary(current_setting('t.project_id')::uuid, 30) order by check_date desc limit 1;
+  assert r.checked = 1 and r.ranked = 1 and r.avg_position = 5 and r.top10 = 1 and r.top3 = 0, 'summary ' || r::text;
+  assert r.visibility = round(100 * 0.06 / 0.28, 1), 'visibility ' || r.visibility;
+end $$;
+reset role;
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000b', 'bob@client.fi');
+do $$ begin
+  assert (select count(*) from public.project_rank_summary(current_setting('t.project_id')::uuid, 30)) = 0, 'bob gets no foreign summary';
+end $$;
+reset role;
+\echo ok 7 positions partitioned, snapshot trigger, private partitions not readable, rank summary respects RLS
+
+-- 7b. SERP change events: scope from keyword, tenant isolation, service-only writes
+select pg_temp.as_service();
+insert into public.keyword_events (keyword_id, check_date, kind, subject, payload, organization_id, project_id)
+values (:'kw_id', current_date, 'competitor_entered', 'kilpailija.fi', '{"rank": 3}', gen_random_uuid(), gen_random_uuid());
+reset role;
+do $$ begin
+  assert (select organization_id from public.keyword_events limit 1) = current_setting('t.agency_id')::uuid, 'event scope from keyword';
+end $$;
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000a', 'alice@agency.fi');
+do $$ begin assert (select count(*) from public.keyword_events) = 1, 'alice sees her events'; end $$;
+select pg_temp.expect_error(format($q$insert into public.keyword_events (keyword_id, check_date, kind) values (%L, current_date, 'url_changed')$q$, :'kw_id'), 'permission denied');
+reset role;
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000b', 'bob@client.fi');
+do $$ begin assert (select count(*) from public.keyword_events) = 0, 'bob sees no foreign events'; end $$;
+reset role;
+select pg_temp.as_service();
+select pg_temp.expect_error(format($q$insert into public.keyword_events (keyword_id, check_date, kind, subject) values (%L, current_date, 'competitor_entered', 'kilpailija.fi')$q$, :'kw_id'), 'duplicate key');
+reset role;
+\echo ok 7b serp change events: scoped, isolated, service-only writes, one per kind+subject per day
 
 -- 8. Invitations & roles ------------------------------------------------------
 select pg_temp.as_user('00000000-0000-0000-0000-00000000000a', 'alice@agency.fi');
@@ -256,6 +291,41 @@ do $$ begin
 end $$;
 reset role;
 \echo ok 11 site audit request, clamp, dedupe
+
+-- 11b. "Check now": on-demand rank check -----------------------------------------
+do $$ begin
+  assert (select last_provider from public.keyword_tracking where id = current_setting('t.kw_id')::uuid) = 'dataforseo',
+    'snapshot keeps last provider';
+end $$;
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000a', 'alice@agency.fi');
+do $$
+declare j public.jobs;
+begin
+  assert public.request_rank_check(current_setting('t.project_id')::uuid) = 1, 'one keyword queued';
+  select * into j from public.jobs where queue = 'rank_check' and (payload ->> 'manual')::boolean;
+  assert j.priority = 10 and j.payload -> 'keyword_ids' = jsonb_build_array(current_setting('t.kw_id')), 'manual job ' || j::text;
+  assert j.payload ->> 'requested_by' = '00000000-0000-0000-0000-00000000000a', 'requester recorded';
+end $$;
+select pg_temp.expect_error(format($q$select public.request_rank_check(%L)$q$, :'project_id'), 'rank_check_cooldown');
+select pg_temp.expect_error(format($q$select public.request_rank_check((select id from public.projects where organization_id = %L))$q$, :'bob_org'), 'forbidden');
+reset role;
+-- A finished check older than an hour no longer blocks.
+update public.jobs set status = 'succeeded', finished_at = now() - interval '2 hours'
+ where queue = 'rank_check' and (payload ->> 'manual')::boolean;
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000a', 'alice@agency.fi');
+do $$ begin assert public.request_rank_check(current_setting('t.project_id')::uuid) = 1, 'allowed after cooldown'; end $$;
+reset role;
+-- Bob's free workspace: no keywords, then quota exhausted (300/300 used in test 9).
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000b', 'bob@client.fi');
+select id as bob_project from public.projects where organization_id = :'bob_org' \gset
+select pg_temp.expect_error(format($q$select public.request_rank_check(%L)$q$, :'bob_project'), 'no_keywords');
+insert into public.keyword_tracking (project_id, organization_id, keyword) values (:'bob_project', :'bob_org', 'oma avainsana');
+select pg_temp.expect_error(format($q$select public.request_rank_check(%L)$q$, :'bob_project'), 'quota_exceeded:serp_query');
+reset role;
+set role anon;
+select pg_temp.expect_error(format($q$select public.request_rank_check(%L)$q$, :'project_id'), 'permission denied');
+reset role;
+\echo ok 11b check now: role, cooldown, quota, snapshot provider
 
 -- 12. anon ---------------------------------------------------------------------
 set role anon;

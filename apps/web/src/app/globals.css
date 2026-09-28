@@ -1,0 +1,98 @@
+@import "tailwindcss";
+
+/* Design tokens. Chart tokens follow the validated dataviz reference palette
+   (categorical order is the CVD-safety mechanism — do not reorder). */
+:root {
+  color-scheme: light;
+  --background: #f9f9f7;
+  --surface: #fcfcfb;
+  --foreground: #0b0b0b;
+  --muted-foreground: #52514e;
+  --subtle-foreground: #6f6e69;
+  --border: rgba(11, 11, 11, 0.1);
+  --input: rgba(11, 11, 11, 0.16);
+  --primary: #256abf;
+  --primary-foreground: #ffffff;
+  --accent: #f0efec;
+  --ring: #2a78d6;
+  --destructive: #d03b3b;
+  --success-text: #006300;
+  --danger-text: #b3261e;
+  --warning-surface: #fdf4dc;
+  --warning-border: #eed9a0;
+  --warning-text: #6b4800;
+
+  --chart-grid: #e1e0d9;
+  --chart-axis: #c3c2b7;
+  --chart-muted: #898781;
+  --series-1: #2a78d6;
+  --series-2: #eb6834;
+  --series-3: #1baf7a;
+  --series-4: #eda100;
+  --series-5: #e87ba4;
+  --series-6: #008300;
+  --series-7: #4a3aa7;
+  --series-8: #e34948;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) {
+    color-scheme: dark;
+    --background: #0d0d0d;
+    --surface: #1a1a19;
+    --foreground: #ffffff;
+    --muted-foreground: #c3c2b7;
+    --subtle-foreground: #a3a29b;
+    --border: rgba(255, 255, 255, 0.1);
+    --input: rgba(255, 255, 255, 0.16);
+    --primary: #3987e5;
+    --primary-foreground: #0b0b0b;
+    --accent: #262624;
+    --ring: #3987e5;
+    --destructive: #e66767;
+    --success-text: #0ca30c;
+    --danger-text: #e66767;
+    --warning-surface: #2a2212;
+    --warning-border: #4d3d17;
+    --warning-text: #f0c35c;
+
+    --chart-grid: #2c2c2a;
+    --chart-axis: #383835;
+    --chart-muted: #898781;
+    --series-1: #3987e5;
+    --series-2: #d95926;
+    --series-3: #199e70;
+    --series-4: #c98500;
+    --series-5: #d55181;
+    --series-6: #008300;
+    --series-7: #9085e9;
+    --series-8: #e66767;
+  }
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-foreground: var(--foreground);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-subtle-foreground: var(--subtle-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-accent: var(--accent);
+  --color-ring: var(--ring);
+  --color-destructive: var(--destructive);
+  --color-success-text: var(--success-text);
+  --color-danger-text: var(--danger-text);
+  --color-warning-surface: var(--warning-surface);
+  --color-warning-border: var(--warning-border);
+  --color-warning-text: var(--warning-text);
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+}

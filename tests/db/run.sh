@@ -20,7 +20,7 @@ if [ "$(id -u)" = "0" ]; then
   RUN_AS=(runuser -u postgres --)
 fi
 
-"${RUN_AS[@]}" initdb -D "$TMP/data" -U postgres -A trust >/dev/null
+"${RUN_AS[@]}" initdb -D "$TMP/data" -U postgres -A trust -E UTF8 --locale=C >/dev/null
 "${RUN_AS[@]}" pg_ctl -D "$TMP/data" -o "-p $PORT -k $TMP -c listen_addresses=''" -l "$TMP/log" -w start >/dev/null
 
 PSQL=(psql -h "$TMP" -p "$PORT" -U postgres -v ON_ERROR_STOP=1 -X -q)

@@ -1,0 +1,189 @@
+{
+  "Common": {
+    "appName": "BraiSEO",
+    "signIn": "Kirjaudu",
+    "signOut": "Kirjaudu ulos",
+    "openApp": "Avaa hallintapaneeli",
+    "language": "Kieli",
+    "save": "Tallenna",
+    "cancel": "Peruuta",
+    "delete": "Poista",
+    "loading": "Käsitellään…",
+    "unlimited": "Rajaton",
+    "notAvailable": "—"
+  },
+  "Metadata": {
+    "title": "BraiSEO — avoimen lähdekoodin SEO-alusta",
+    "description": "Sijoitusseuranta, sivustoauditoinnit, kilpailija-analyysi ja white-label-raportit edullisella API-datalla. Avointa lähdekoodia (AGPL-3.0)."
+  },
+  "Landing": {
+    "eyebrow": "Avoin lähdekoodi · AGPL-3.0",
+    "title": "SEO-näkemykset ilman suuryrityshintoja",
+    "subtitle": "Seuraa sijoituksia, auditoi sivustoja, selvitä kilpailijoiden avainsanat ja lähetä asiakkaille omalla brändillä varustettuja raportteja — läpinäkyvällä, käytön mukaan hinnoitellulla hakudatalla.",
+    "cta": "Aloita maksutta",
+    "secondaryCta": "Katso hinnat",
+    "featuresTitle": "Kaikki mitä SEO-tiimi tarvitsee",
+    "features": {
+      "rank": {
+        "title": "Sijoitusseuranta",
+        "body": "Päivittäiset sijoitukset maittain, kielittäin ja laitteittain, mukaan lukien AI Overviews ja muut SERP-ominaisuudet."
+      },
+      "audit": {
+        "title": "Sivustoauditoinnit",
+        "body": "Crawlaa sivusto, löydä tekniset ongelmat ja tarkista AI-valmius terveyspisteiden avulla."
+      },
+      "competitors": {
+        "title": "Kilpailija-aukot",
+        "body": "Näe avainsanat, joilla kilpailijat sijoittuvat, ja missä sinulta puuttuu näkyvyyttä."
+      },
+      "reports": {
+        "title": "White-label-raportit",
+        "body": "Brändätyt web- ja PDF-raportit asiakkaille suomeksi, ruotsiksi tai englanniksi."
+      }
+    },
+    "pricingTitle": "Selkeä hinnoittelu",
+    "pricingSubtitle": "Hinnat alv 0 %. Maksullisissa paketeissa kiintiön voi ylittää käytön mukaan laskutettuna.",
+    "perMonth": "/ kk",
+    "limits": {
+      "projects": "{count, plural, one {# projekti} other {# projektia}}",
+      "keywords": "{count, plural, other {# seurattavaa avainsanaa}}",
+      "seats": "{count, plural, one {# käyttäjä} other {# käyttäjää}}",
+      "auditPages": "{count, plural, other {# auditointisivua / kk}}",
+      "whiteLabel": "White-label-raportit",
+      "api": "API-käyttö",
+      "projectsUnlimited": "Rajattomasti projekteja",
+      "keywordsUnlimited": "Rajattomasti avainsanoja",
+      "seatsUnlimited": "Rajattomasti käyttäjiä",
+      "auditPagesUnlimited": "Rajattomasti auditointisivuja"
+    }
+  },
+  "Login": {
+    "title": "Kirjaudu BraiSEO:hon",
+    "description": "Lähetämme sinulle turvallisen kirjautumislinkin sähköpostiin. Salasanaa ei tarvita.",
+    "email": "Työsähköposti",
+    "submit": "Lähetä kirjautumislinkki",
+    "sent": "Tarkista sähköpostisi — kirjautumislinkki on voimassa tunnin.",
+    "invalidEmail": "Anna kelvollinen sähköpostiosoite.",
+    "failed": "Linkin lähetys epäonnistui. Yritä hetken päästä uudelleen.",
+    "callbackFailed": "Kirjautumislinkki on virheellinen tai vanhentunut. Pyydä uusi linkki."
+  },
+  "App": {
+    "workspaces": "Työtilat",
+    "personal": "Oma",
+    "projects": "Projektit",
+    "noProjects": "Ei vielä projekteja. Lisää ensimmäinen sivustosi aloittaaksesi sijoitusseurannan.",
+    "newProject": "Uusi projekti",
+    "projectName": "Nimi",
+    "domain": "Verkkotunnus",
+    "domainHint": "Esimerkiksi esimerkki.fi — ilman https://-alkua tai polkua.",
+    "location": "Hakumarkkina",
+    "clientName": "Asiakas (valinnainen)",
+    "createProject": "Luo projekti",
+    "keywordsCount": "{count, plural, =0 {Ei avainsanoja} one {# avainsana} other {# avainsanaa}}",
+    "usageTitle": "Käyttö tällä laskutuskaudella",
+    "plan": "Paketti: {plan}",
+    "metric": {
+      "serp_query": "SERP-tarkistukset",
+      "keyword_lookup": "Avainsanahaut",
+      "audit_page": "Auditointisivut",
+      "backlink_query": "Linkkihaut",
+      "ai_credit": "AI-krediitit",
+      "api_call": "API-kutsut",
+      "report_render": "Raportit"
+    },
+    "usedOf": "{used} / {quota}",
+    "usedUnlimited": "{used} käytetty"
+  },
+  "Project": {
+    "back": "Kaikki projektit",
+    "rankings": "Sijoitukset",
+    "range": "Aikaväli",
+    "rangeDays": "{days} päivää",
+    "kpi": {
+      "tracked": "Seurattavat avainsanat",
+      "avgPosition": "Keskisijoitus",
+      "top3": "Top 3",
+      "top10": "Top 10",
+      "visibility": "Näkyvyys",
+      "vsStart": "vs. jakson alku"
+    },
+    "chartTitle": "Sijoitus ajan mittaan",
+    "chartHint": "Valitse taulukosta enintään 8 avainsanaa vertailuun. Sijoitus 1 on ylimpänä.",
+    "chartEmpty": "Sijoitusdataa ei vielä ole. Ensimmäinen tarkistus ajetaan automaattisesti avainsanojen lisäämisen jälkeen.",
+    "positionAxis": "Sijoitus",
+    "keywordsTitle": "Avainsanat",
+    "addKeywords": "Lisää avainsanoja",
+    "keywordsPlaceholder": "Yksi avainsana per rivi",
+    "device": "Laite",
+    "desktop": "Tietokone",
+    "mobile": "Mobiili",
+    "add": "Lisää",
+    "added": "{count, plural, one {# avainsana lisätty} other {# avainsanaa lisätty}}",
+    "noKeywords": "Ei vielä avainsanoja.",
+    "col": {
+      "select": "Näytä kaaviossa",
+      "keyword": "Avainsana",
+      "position": "Sijoitus",
+      "change": "Muutos",
+      "best": "Paras",
+      "volume": "Hakumäärä",
+      "url": "Sijoittuva URL",
+      "checked": "Tarkistettu",
+      "difficulty": "KD",
+      "difficultyLong": "Avainsanan vaikeus (0–100): kuinka vaikea on päästä top 10:een"
+    },
+    "notRanking": "Ei top {depth}:ssä",
+    "notChecked": "Odottaa",
+    "improved": "Nousi {count}",
+    "declined": "Laski {count}",
+    "unchanged": "Ei muutosta",
+    "remove": "Poista avainsana",
+    "selectLimit": "Voit verrata enintään 8 avainsanaa kerrallaan.",
+    "checkNow": "Tarkista nyt",
+    "checking": "Tarkistetaan…",
+    "checkingHint": "Tulokset päivittyvät automaattisesti.",
+    "checkQueued": "{count, plural, one {# avainsana} other {# avainsanaa}} jonossa. Tulokset muutamassa minuutissa.",
+    "checkAvailableAt": "Seuraava pikatarkistus klo {time}",
+    "demoBadge": "Demo",
+    "demoNotice": "Nämä sijoitukset ovat simuloituja, koska hakudatan lähdettä ei ole vielä kytketty. Oikeat sijoitukset korvaavat ne seuraavassa tarkistuksessa, kun lähde on määritetty.",
+    "difficulty": {
+      "easy": "Helppo",
+      "moderate": "Kohtalainen",
+      "hard": "Vaikea",
+      "veryHard": "Erittäin vaikea"
+    }
+  },
+  "Errors": {
+    "generic": "Jokin meni pieleen. Yritä uudelleen.",
+    "planLimit": "Pakettisi raja ({limit, select, max_projects {projektit} max_keywords {avainsanat} max_seats {käyttäjät} max_competitors_per_project {kilpailijat} other {tämä ominaisuus}}) on täynnä. Päivitä paketti lisätäksesi.",
+    "invalidDomain": "Anna verkkotunnus muodossa esimerkki.fi.",
+    "duplicate": "Tämä on jo olemassa.",
+    "required": "Kenttä on pakollinen.",
+    "forbidden": "Sinulla ei ole oikeutta tähän toimintoon.",
+    "cooldown": "Tarkistus on jo käynnissä tai tehtiin äskettäin. Yritä myöhemmin uudelleen.",
+    "noKeywords": "Lisää ensin avainsanoja.",
+    "quotaExceeded": "Tämän kuun {metric, select, serp_query {sijoitustarkistusten} audit_page {sivustoauditointien} other {käytön}} kiintiö on käytetty. Päivitä paketti jatkaaksesi."
+  },
+  "Changes": {
+    "title": "SERP-muutokset",
+    "hint": "Mikä muuttui kunkin avainsanan edellisestä tarkistuksesta.",
+    "empty": "Ei vielä muutoksia. Muutokset näkyvät toisesta tarkistuksesta alkaen.",
+    "kind": {
+      "started_ranking": "Alkoi sijoittua: #{to}",
+      "stopped_ranking": "Putosi tarkistetuista tuloksista (oli #{from})",
+      "entered_top3": "Nousi kolmen kärkeen: #{from} → #{to}",
+      "left_top3": "Putosi kolmen kärjestä: #{from} → #{to}",
+      "entered_top10": "Nousi ensimmäiselle sivulle: #{from} → #{to}",
+      "left_top10": "Putosi ensimmäiseltä sivulta: #{from} → #{to}",
+      "position_up": "Nousi {delta} sijaa: #{from} → #{to}",
+      "position_down": "Laski {delta} sijaa: #{from} → #{to}",
+      "url_changed": "Google näyttää nyt eri sivun: {url}",
+      "feature_gained": "Uusi SERP-elementti: {feature, select, ai_overview {AI-yhteenveto} featured_snippet {Nostettu katkelma} people_also_ask {Muut kysyivät myös} local_pack {Paikallistulokset} video {Videot} images {Kuvat} top_stories {Uutiset} knowledge_graph {Tietopaneeli} shopping {Ostostulokset} related_searches {Aiheeseen liittyvät haut} other {{raw}}}",
+      "feature_lost": "SERP-elementti poistui: {feature, select, ai_overview {AI-yhteenveto} featured_snippet {Nostettu katkelma} people_also_ask {Muut kysyivät myös} local_pack {Paikallistulokset} video {Videot} images {Kuvat} top_stories {Uutiset} knowledge_graph {Tietopaneeli} shopping {Ostostulokset} related_searches {Aiheeseen liittyvät haut} other {{raw}}}",
+      "ai_overview_cited": "Sivustosi mainitaan nyt AI-yhteenvedossa",
+      "ai_overview_uncited": "Sivustoasi ei enää mainita AI-yhteenvedossa",
+      "competitor_entered": "{domain} nousi top 10:een (#{rank})",
+      "competitor_left": "{domain} putosi top 10:stä (oli #{previousRank})"
+    }
+  }
+}

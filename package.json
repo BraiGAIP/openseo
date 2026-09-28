@@ -1,0 +1,15 @@
+{
+  "name": "openseo",
+  "private": true,
+  "license": "AGPL-3.0-only",
+  "workspaces": ["apps/*", "packages/*"],
+  "scripts": {
+    "dev": "npm run dev -w @openseo/web",
+    "build": "npm run build -w @openseo/web",
+    "lint": "npm run lint -w @openseo/web",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test:db": "./tests/db/run.sh",
+    "gen:types": "supabase gen types typescript --project-id itxtluifqbxxrealkpfj --schema public > packages/shared/src/database.types.ts"
+  },
+  "engines": { "node": ">=20.9" }
+}

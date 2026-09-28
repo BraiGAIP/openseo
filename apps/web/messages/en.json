@@ -1,0 +1,189 @@
+{
+  "Common": {
+    "appName": "BraiSEO",
+    "signIn": "Sign in",
+    "signOut": "Sign out",
+    "openApp": "Open dashboard",
+    "language": "Language",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "loading": "Working…",
+    "unlimited": "Unlimited",
+    "notAvailable": "—"
+  },
+  "Metadata": {
+    "title": "BraiSEO — open-source SEO platform",
+    "description": "Rank tracking, site audits, competitor research and white-label reports on affordable API data. Open source under AGPL-3.0."
+  },
+  "Landing": {
+    "eyebrow": "Open source · AGPL-3.0",
+    "title": "SEO insights without the enterprise price tag",
+    "subtitle": "Track rankings, audit sites, reverse-engineer competitors and send white-label client reports — built on transparent, pay-as-you-go search data.",
+    "cta": "Start free",
+    "secondaryCta": "View pricing",
+    "featuresTitle": "Everything an SEO team needs",
+    "features": {
+      "rank": {
+        "title": "Rank tracking",
+        "body": "Daily positions per country, language and device, including AI Overviews and other SERP features."
+      },
+      "audit": {
+        "title": "Site audits",
+        "body": "Crawl your site, find technical issues and check AI-readiness with a health score."
+      },
+      "competitors": {
+        "title": "Competitor gap",
+        "body": "See the keywords competitors rank for and where you are missing or weak."
+      },
+      "reports": {
+        "title": "White-label reports",
+        "body": "Branded web and PDF reports for clients, in English, Finnish or Swedish."
+      }
+    },
+    "pricingTitle": "Simple pricing",
+    "pricingSubtitle": "Prices exclude VAT. Paid plans can go over their quotas with metered billing.",
+    "perMonth": "/ month",
+    "limits": {
+      "projects": "{count, plural, one {# project} other {# projects}}",
+      "keywords": "{count, plural, other {# tracked keywords}}",
+      "seats": "{count, plural, one {# seat} other {# seats}}",
+      "auditPages": "{count, plural, other {# audit pages / month}}",
+      "whiteLabel": "White-label reports",
+      "api": "API access",
+      "projectsUnlimited": "Unlimited projects",
+      "keywordsUnlimited": "Unlimited keywords",
+      "seatsUnlimited": "Unlimited seats",
+      "auditPagesUnlimited": "Unlimited audit pages"
+    }
+  },
+  "Login": {
+    "title": "Sign in to BraiSEO",
+    "description": "We'll e-mail you a secure sign-in link. No password needed.",
+    "email": "Work e-mail",
+    "submit": "Send sign-in link",
+    "sent": "Check your inbox — the sign-in link is valid for one hour.",
+    "invalidEmail": "Enter a valid e-mail address.",
+    "failed": "We couldn't send the link. Try again in a moment.",
+    "callbackFailed": "That sign-in link is invalid or has expired. Request a new one."
+  },
+  "App": {
+    "workspaces": "Workspaces",
+    "personal": "Personal",
+    "projects": "Projects",
+    "noProjects": "No projects yet. Add your first site to start tracking rankings.",
+    "newProject": "New project",
+    "projectName": "Name",
+    "domain": "Domain",
+    "domainHint": "For example example.com — without https:// or paths.",
+    "location": "Search market",
+    "clientName": "Client (optional)",
+    "createProject": "Create project",
+    "keywordsCount": "{count, plural, =0 {No keywords} one {# keyword} other {# keywords}}",
+    "usageTitle": "Usage this billing period",
+    "plan": "Plan: {plan}",
+    "metric": {
+      "serp_query": "SERP checks",
+      "keyword_lookup": "Keyword lookups",
+      "audit_page": "Audit pages",
+      "backlink_query": "Backlink queries",
+      "ai_credit": "AI credits",
+      "api_call": "API calls",
+      "report_render": "Reports"
+    },
+    "usedOf": "{used} of {quota}",
+    "usedUnlimited": "{used} used"
+  },
+  "Project": {
+    "back": "All projects",
+    "rankings": "Rankings",
+    "range": "Period",
+    "rangeDays": "{days} days",
+    "kpi": {
+      "tracked": "Tracked keywords",
+      "avgPosition": "Average position",
+      "top3": "Top 3",
+      "top10": "Top 10",
+      "visibility": "Visibility",
+      "vsStart": "vs. start of period"
+    },
+    "chartTitle": "Position over time",
+    "chartHint": "Select up to 8 keywords in the table to compare. Position 1 is at the top.",
+    "chartEmpty": "No ranking data yet. The first check runs automatically after keywords are added.",
+    "positionAxis": "Position",
+    "keywordsTitle": "Keywords",
+    "addKeywords": "Add keywords",
+    "keywordsPlaceholder": "One keyword per line",
+    "device": "Device",
+    "desktop": "Desktop",
+    "mobile": "Mobile",
+    "add": "Add",
+    "added": "{count, plural, one {# keyword added} other {# keywords added}}",
+    "noKeywords": "No keywords yet.",
+    "col": {
+      "select": "Show in chart",
+      "keyword": "Keyword",
+      "position": "Position",
+      "change": "Change",
+      "best": "Best",
+      "volume": "Volume",
+      "url": "Ranking URL",
+      "checked": "Last checked",
+      "difficulty": "KD",
+      "difficultyLong": "Keyword difficulty (0–100): how hard it is to reach the top 10"
+    },
+    "notRanking": "Not in top {depth}",
+    "notChecked": "Pending",
+    "improved": "Improved by {count}",
+    "declined": "Declined by {count}",
+    "unchanged": "No change",
+    "remove": "Remove keyword",
+    "selectLimit": "You can compare up to 8 keywords at once.",
+    "checkNow": "Check now",
+    "checking": "Checking…",
+    "checkingHint": "Results update automatically.",
+    "checkQueued": "{count, plural, one {# keyword} other {# keywords}} queued. Results in a few minutes.",
+    "checkAvailableAt": "Next manual check available at {time}",
+    "demoBadge": "Demo",
+    "demoNotice": "These rankings are simulated because no search data provider is connected yet. Real positions replace them on the next check once a provider is configured.",
+    "difficulty": {
+      "easy": "Easy",
+      "moderate": "Moderate",
+      "hard": "Hard",
+      "veryHard": "Very hard"
+    }
+  },
+  "Errors": {
+    "generic": "Something went wrong. Please try again.",
+    "planLimit": "Your plan's limit for {limit, select, max_projects {projects} max_keywords {keywords} max_seats {seats} max_competitors_per_project {competitors} other {this feature}} has been reached. Upgrade to add more.",
+    "invalidDomain": "Enter a domain like example.com.",
+    "duplicate": "That already exists.",
+    "required": "This field is required.",
+    "forbidden": "You don't have permission to do that.",
+    "cooldown": "A check is already running or ran recently. Try again later.",
+    "noKeywords": "Add keywords first.",
+    "quotaExceeded": "This month's {metric, select, serp_query {ranking check} audit_page {site audit} other {usage}} quota is used up. Upgrade to continue."
+  },
+  "Changes": {
+    "title": "SERP changes",
+    "hint": "What changed since each keyword's previous check.",
+    "empty": "No changes yet. Changes appear from the second check onwards.",
+    "kind": {
+      "started_ranking": "Started ranking at #{to}",
+      "stopped_ranking": "Dropped out of the checked results (was #{from})",
+      "entered_top3": "Entered the top 3: #{from} → #{to}",
+      "left_top3": "Left the top 3: #{from} → #{to}",
+      "entered_top10": "Reached page one: #{from} → #{to}",
+      "left_top10": "Dropped off page one: #{from} → #{to}",
+      "position_up": "Up {delta} places: #{from} → #{to}",
+      "position_down": "Down {delta} places: #{from} → #{to}",
+      "url_changed": "Google now ranks a different page: {url}",
+      "feature_gained": "New SERP feature: {feature, select, ai_overview {AI Overview} featured_snippet {Featured snippet} people_also_ask {People also ask} local_pack {Local pack} video {Videos} images {Images} top_stories {Top stories} knowledge_graph {Knowledge panel} shopping {Shopping results} related_searches {Related searches} other {{raw}}}",
+      "feature_lost": "SERP feature gone: {feature, select, ai_overview {AI Overview} featured_snippet {Featured snippet} people_also_ask {People also ask} local_pack {Local pack} video {Videos} images {Images} top_stories {Top stories} knowledge_graph {Knowledge panel} shopping {Shopping results} related_searches {Related searches} other {{raw}}}",
+      "ai_overview_cited": "Your site is now cited in the AI Overview",
+      "ai_overview_uncited": "Your site is no longer cited in the AI Overview",
+      "competitor_entered": "{domain} entered the top 10 (#{rank})",
+      "competitor_left": "{domain} left the top 10 (was #{previousRank})"
+    }
+  }
+}

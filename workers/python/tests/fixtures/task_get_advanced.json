@@ -1,0 +1,69 @@
+{
+  "version": "0.1.20260901",
+  "status_code": 20000,
+  "status_message": "Ok.",
+  "time": "0.1234 sec.",
+  "cost": 0,
+  "tasks_count": 1,
+  "tasks_error": 0,
+  "tasks": [
+    {
+      "id": "09271234-1535-0139-0000-2f1f1d7c4a11",
+      "status_code": 20000,
+      "status_message": "Ok.",
+      "time": "0.0512 sec.",
+      "cost": 0.00105,
+      "result_count": 1,
+      "path": ["v3", "serp", "google", "organic", "task_get", "advanced", "09271234-1535-0139-0000-2f1f1d7c4a11"],
+      "data": {
+        "api": "serp", "function": "task_get", "se": "google", "se_type": "organic",
+        "keyword": "ev battery warranty", "location_code": 2840, "language_code": "en",
+        "device": "desktop", "os": "windows", "depth": 100, "tag": "0"
+      },
+      "result": [
+        {
+          "keyword": "ev battery warranty",
+          "type": "organic",
+          "se_domain": "google.com",
+          "location_code": 2840,
+          "language_code": "en",
+          "check_url": "https://www.google.com/search?q=ev%20battery%20warranty&num=10&hl=en&gl=US",
+          "datetime": "2026-09-27 12:00:00 +00:00",
+          "spell": null,
+          "refinement_chips": null,
+          "item_types": ["ai_overview", "organic", "people_also_ask"],
+          "se_results_count": 184000000,
+          "pages_count": 2,
+          "items_count": 14,
+          "items": [
+            {
+              "type": "ai_overview", "rank_group": 1, "rank_absolute": 1, "position": "left",
+              "asynchronous_ai_overview": false, "markdown": "…",
+              "items": [
+                {"type": "ai_overview_element", "title": null, "text": "…",
+                 "references": [{"type": "ai_overview_reference", "source": "Example", "domain": "www.example-ev.com",
+                                 "url": "https://www.example-ev.com/warranty", "title": "Warranty", "text": "…"}]}
+              ],
+              "references": [
+                {"type": "ai_overview_reference", "source": "Energy.gov", "domain": "www.energy.gov",
+                 "url": "https://www.energy.gov/ev", "title": "EVs", "text": "…"}
+              ]
+            },
+            {"type": "organic", "rank_group": 1, "rank_absolute": 2, "page": 1, "position": "left",
+             "domain": "www.energy.gov", "title": "Electric vehicle batteries", "url": "https://www.energy.gov/ev"},
+            {"type": "people_also_ask", "rank_group": 1, "rank_absolute": 3, "position": "left", "items": []},
+            {"type": "organic", "rank_group": 2, "rank_absolute": 4, "page": 1, "position": "left",
+             "domain": "www.caranddriver.com", "title": "EV battery warranties", "url": "https://www.caranddriver.com/x"},
+            {"type": "organic", "rank_group": 3, "rank_absolute": 5, "page": 1, "position": "left",
+             "domain": "en.wikipedia.org", "title": "Battery", "url": "https://en.wikipedia.org/wiki/Battery"},
+            {"type": "organic", "rank_group": 12, "rank_absolute": 14, "page": 2, "position": "left",
+             "domain": "blog.example-ev.com", "title": "How long do EV batteries last?",
+             "url": "https://blog.example-ev.com/ev-battery-life"},
+            {"type": "organic", "rank_group": 15, "rank_absolute": 17, "page": 2, "position": "left",
+             "domain": "www.example-ev.com", "title": "Warranty", "url": "https://www.example-ev.com/warranty"}
+          ]
+        }
+      ]
+    }
+  ]
+}

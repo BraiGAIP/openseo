@@ -1,0 +1,36 @@
+# Fly.io config for the BraiSEO web app (Next.js standalone server).
+# Deploy: GitHub Actions (.github/workflows/deploy-web.yml), or from the repo root:
+#   fly deploy --config apps/web/fly.toml --dockerfile apps/web/Dockerfile \
+#     --build-arg NEXT_PUBLIC_SITE_URL=https://braiseo-web.fly.dev .
+app = "braiseo-web"
+primary_region = "fra"            # same metro as Supabase eu-central-1
+
+# The Dockerfile (apps/web/Dockerfile) is passed with --dockerfile; the build context is the repo root.
+# Public values (the publishable key is designed to be public; RLS protects the data).
+[build.args]
+  NEXT_PUBLIC_SUPABASE_URL = "https://itxtluifqbxxrealkpfj.supabase.co"
+  NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_DRTeI9o9IrqTsGPdCkgYbw_VlChrDmx"
+
+[env]
+  NEXT_PUBLIC_SUPABASE_URL = "https://itxtluifqbxxrealkpfj.supabase.co"
+  NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_DRTeI9o9IrqTsGPdCkgYbw_VlChrDmx"
+
+[http_service]
+  internal_port = 3000
+  force_https = true
+  # Cheapest: the machine sleeps when idle and wakes on the next request (~1 s cold start).
+  # Set min_machines_running = 1 once there are paying customers.
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+  [[http_service.checks]]
+    grace_period = "10s"
+    interval = "30s"
+    method = "GET"
+    path = "/"
+    timeout = "5s"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"

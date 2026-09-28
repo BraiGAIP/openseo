@@ -1,4 +1,4 @@
-# OpenSEO – Architecture
+# BraiSEO – Architecture
 
 > **Status:** v0.2 · 2026-09-27 · decisions D1–D14 accepted
 > **Goal:** an open-source (AGPL-3.0), API-data-driven SEO platform — a SEMrush alternative — for our own sites, client work and as a commercial multi-tenant SaaS.
@@ -10,7 +10,7 @@
 
 | # | Decision | Choice | Rationale |
 |---|---|---|---|
-| D1 | Frontend + BFF | **Next.js 15 (App Router) + React 19 + Tailwind + shadcn/ui** | SSR for public reports and marketing pages, Route Handlers for the public API and Stripe webhooks, one TypeScript codebase. |
+| D1 | Frontend + BFF | **Next.js 16 (App Router, Turbopack, `proxy.ts`) + React 19 + Tailwind v4 + shadcn-style components** | SSR for public reports and marketing pages, Route Handlers for the public API and Stripe webhooks, one TypeScript codebase. |
 | D2 | Database, auth, storage | **Supabase (Postgres 17, RLS, Auth, Storage, Vault, pg_cron)** — project `OpenSEO`, ref `itxtluifqbxxrealkpfj`, region **eu-central-1 (Frankfurt)** | Tenant isolation enforced in the database, managed auth/SSO, plain Postgres (no lock-in), EU data residency. |
 | D3 | Heavy work | **Python 3.12 workers** (httpx/asyncio, selectolax, Playwright, anthropic SDK) | Crawling, SERP parsing, data work and the AI pipeline fit Python best; Edge Functions have too little time/memory for crawls. |
 | D4 | Worker hosting | **Fly.io** (Machines, EU region `fra` next to the database) | Fastest to operate early on; per-second billing, autoscaling by process group. Re-evaluate Hetzner when steady-state load is known. |
@@ -19,11 +19,12 @@
 | D7 | AI | **Claude API with model tiering**: bulk work on lighter models via **Message Batches API (−50 %)**, deep analysis on **Opus** | Quality where it matters, lowest cost for high-volume classification. See §9. |
 | D8 | Billing | **Stripe Billing: flat subscription + Billing Meters** for overage | Legacy usage records API was removed in `2025-03-31.basil`; Meters are the only supported path. |
 | D9 | Reports | **One React template → web (`/r/[token]`) + PDF (Playwright)**, white-label per organization | Single source for web and PDF; branding + custom domain on Agency. |
-| D10 | Repository | **Own repository `BraiGAIP/openseo`** | Keeps OpenSEO independent of other products and their Supabase projects. |
+| D10 | Repository | **Own repository `BraiGAIP/openseo`** | Keeps BraiSEO independent of other products and their Supabase projects. |
 | D11 | License | **AGPL-3.0** | Anyone may self-host and modify; anyone offering it as a network service must publish their changes → protects against closed SaaS forks. |
 | D12 | Market & language | **International from day one, English first**, i18n-ready for **Finnish and Swedish** | Largest addressable market; FI/SV give a home-market edge. |
 | D13 | Pricing | **Free 0 € · Pro 49 €/mo · Agency 149 €/mo** (+ Enterprise on request) | Accepted; see §11. |
 | D14 | Migrations | Only via files in `supabase/migrations`, verified by `tests/db/run.sh` and a schema fingerprint before production | Reproducible, reviewable schema; no dashboard drift. |
+| D15 | Product name | **BraiSEO** (renamed from OpenSEO, 09/2026). Visible texts, Fly apps (`braiseo-web`, `braiseo-workers`) and docs use the new name; internal code names (`@openseo/*`, `openseo_workers`, repo, Supabase project) stay | Renaming internal identifiers adds risk without user benefit. The AGPL-3.0 choice (D11) is open for review — see §15. |
 
 ---
 
@@ -49,7 +50,7 @@
 
 | Layer | Technology | Notes |
 |---|---|---|
-| UI | Next.js 15, React 19, TypeScript, Tailwind CSS v4, shadcn/ui, TanStack Query/Table | Server Components for data, client components only where interactive |
+| UI | Next.js 16, React 19, TypeScript, Tailwind CSS v4, shadcn/ui, TanStack Query/Table | Server Components for data, client components only where interactive |
 | i18n | **next-intl**, locales `en` (default), `fi`, `sv`; ICU messages in `apps/web/messages/*.json` | Locale-prefixed routes (`/fi/...`), `organizations.default_locale`, `reports.locale`, locale-aware number/date formatting |
 | Charts | **Recharts** (dashboard), **ECharts** (large time series, 10k+ points) | One palette for light/dark/print |
 | Auth | Supabase Auth (email + magic link, Google; SAML SSO for Enterprise) | JWT → RLS |
@@ -135,7 +136,7 @@ flowchart LR
 ```
 openseo/
 ├── apps/
-│   └── web/                     # Next.js 15 – UI, /api/v1, Stripe webhook, public reports
+│   └── web/                     # Next.js 16 – UI, /api/v1, Stripe webhook, public reports
 │       ├── app/[locale]/(marketing)/   # landing, pricing (reads public.plans)
 │       ├── app/[locale]/(app)/[org]/[project]/…   # rankings, keywords, competitors, audit, reports
 │       ├── app/api/v1/…         # public REST API (OpenAPI generated from zod)
@@ -200,7 +201,7 @@ API routes run with the service role (callers have no Supabase JWT), so **every 
 
 ### 5.5 Other controls
 - Secrets (GSC OAuth tokens, BYOK provider keys) in **Supabase Vault**; tables store only references.
-- Crawler: SSRF protection (block private ranges, metadata endpoints, redirects into internal networks), `robots.txt` respected by default, identifiable UA `OpenSEOBot/1.0 (+https://…/bot)`, per-host rate limits.
+- Crawler: SSRF protection (block private ranges, metadata endpoints, redirects into internal networks), `robots.txt` respected by default, identifiable UA `BraiSEOBot/1.0 (+https://brai.build/bot)`, per-host rate limits.
 - Prompt injection: crawled content is **data, not instructions** — wrapped in document blocks, outputs validated against JSON schemas, and the model has no tools that write to the database.
 - GDPR: DPA for customers, EU data residency, user deletion removes personal data and anonymises `audit_log`.
 
@@ -329,9 +330,10 @@ The **router** chooses: (1) the organization's BYOK key if configured (`integrat
 **Important change:** Google effectively removed `num=100` in September 2025, so providers now bill **per 10-result page**. Tracking the top 100 costs ~7–10× the top 10. Hence:
 
 ### 8.3 Rank-tracking cost strategy
-- **Adaptive depth:** check daily only as deep as the keyword last ranked + one page (rank 14 → depth 20). Unranked → top 20 daily + top 100 weekly.
+- **Stop at our domain (`stop_crawl_on_match`, implemented):** each task asks DataForSEO to stop crawling once the project domain (incl. subdomains) is found, so only the pages up to our ranking are billed — rank 3 costs one page even with `depth` 100. `keyword_tracking.depth` caps the crawl for keywords we don't rank for.
 - **Standard queue** (not Live) — results within hours, fine for daily tracking. Live only for the "check now" button (consumes `serp_query` quota).
-- **Cross-tenant de-duplication:** same keyword + location + language + device on the same day → one provider call, shared via `provider_cache` (the SERP is identical for everyone; only the tenant's own domain is extracted).
+- **Cross-tenant de-duplication (implemented):** same keyword + market + device + domain on the same day → one provider call, shared via `provider_cache` (e.g. an agency and its client tracking the same site). With `stop_crawl_on_match` the crawl depends on the domain, so the domain is part of the cache key.
+- **Resumable tasks (implemented):** standard-queue task ids are stored in `provider_cache`; a retried job resumes polling instead of posting (and paying for) new tasks.
 - **Estimate for Pro:** 500 keywords × 30 days × ~1.4 pages ≈ 21,000 SERP pages ≈ **USD 12–16 / month**.
 
 ### 8.4 Site-audit crawler
@@ -346,6 +348,26 @@ The **router** chooses: (1) the organization's BYOK key if configured (`integrat
 2. `ranked_keywords` per competitor → `competitor_keywords` (snapshot).
 3. Join with our own data (`keyword_tracking` + Labs `ranked_keywords` for our domain) → `our_position` → `gap_type`.
 4. AI step: cluster missing keywords into topics, classify intent, produce content recommendations (§9).
+
+### 8.6 Keyword difficulty & SERP change tracking (implemented)
+The definitions below are the product's own; marketing copy and the blog should use them.
+
+**Keyword difficulty (KD, 0–100).** DataForSEO Labs `bulk_keyword_difficulty` (≤ 1,000 keywords per call): the chance of reaching the organic top 10, on a logarithmic scale, from the link profiles of the current top 10. Refreshed together with search volume every 30 days and cached in `private.keyword_metrics`, shared between tenants. If Labs is not enabled for the account, KD stays empty and search volume still works; a temporary outage retries the whole refresh on the next run. Display buckets: **0–29 easy · 30–49 moderate · 50–69 hard · 70–100 very hard**. Setting: `DATAFORSEO_KEYWORD_DIFFICULTY` (default on).
+
+**SERP change events** (`public.keyword_events`, written by `workers/python/openseo_workers/rank/changes.py`). Each check is compared with the keyword's previous check. There are no events for the first check, or when exactly one of the two checks is demo data (switching providers is not a SERP change). A re-check on the same day replaces that day's events.
+
+| Event | Rule |
+|---|---|
+| `started_ranking` / `stopped_ranking` | enters / leaves the checked depth |
+| `entered_top3` / `left_top3` | crosses position 3 |
+| `entered_top10` / `left_top10` | crosses position 10 (page one) |
+| `position_up` / `position_down` | moves at least `RANK_JUMP_THRESHOLD` places (default **5**) |
+| `url_changed` | the ranking URL changes (scheme, `www.` and trailing slash ignored), a cannibalisation signal |
+| `feature_gained` / `feature_lost` | a SERP feature appears / disappears (AI Overview, featured snippet, local pack, PAA, video …) |
+| `ai_overview_cited` / `ai_overview_uncited` | our domain starts / stops being cited in the AI Overview |
+| `competitor_entered` / `competitor_left` | another domain enters / leaves the organic top 10 (own domain and subdomains excluded) |
+
+There is at most one position event per check; the most significant one wins (ranking in/out > top 3 > top 10 > jump). A jump from 15 to 2 is therefore reported as "entered the top 3", not three times. The top-10 domains of every check are stored in `keyword_positions.top_domains`. The dashboard shows the events as a feed, marking good news, bad news and neutral changes; a new competitor in the top 10 counts as bad news. Later: e-mail/Slack alerts on selected event types, and a SERP volatility score per project.
 
 ---
 
@@ -378,7 +400,7 @@ List prices per 1M tokens (input / output): Haiku 4.5 USD 1 / 5 · Sonnet 5 USD 
 
 - **One template, two outputs:** React Server Component report (`/r/[token]`) → same HTML to PDF via Playwright (`report_render` worker) → `reports/<org_id>/<report_id>.pdf` in Storage.
 - **Sections (`reports.sections`):** KPI cards (visibility, average position, top-3/top-10 keywords, estimated traffic), rank trend, winners/losers, SERP features, audit health score + top issues, competitor comparison, AI narrative, GSC clicks.
-- **White-label (Agency):** logo, colours, custom footer, no "Powered by OpenSEO", **custom domain** (`reports.agency.com` CNAME → Vercel, automatic TLS), sender name = agency.
+- **White-label (Agency):** logo, colours, custom footer, no "Powered by BraiSEO", **custom domain** (`reports.agency.com` CNAME → Vercel, automatic TLS), sender name = agency.
 - **Localisation:** report language from `reports.locale` (`en`/`fi`/`sv`), locale-aware number/date/currency formatting.
 - **Sharing:** random token (only its hash is stored), expiry, optional password; scheduled monthly reports (`schedule_cron`, `recipients`).
 - **Branding snapshot** stored at render time → old reports don't change when branding changes.
@@ -406,7 +428,7 @@ List prices per 1M tokens (input / output): Haiku 4.5 USD 1 / 5 · Sonnet 5 USD 
 | White-label + custom domain | – | – | ✓ | ✓ |
 | Metered overage | – | ✓ | ✓ | ✓ |
 
-Benchmark: SEMrush Pro USD 139.95/mo, Guru USD 249.95/mo, Business USD 499.95/mo → OpenSEO is **substantially cheaper** and competes on transparency (usage-based, API included, white-label from 149 €).
+Benchmark: SEMrush Pro USD 139.95/mo, Guru USD 249.95/mo, Business USD 499.95/mo → BraiSEO is **substantially cheaper** and competes on transparency (usage-based, API included, white-label from 149 €).
 
 ### 11.2 Unit economics (Pro, 100 % utilisation, estimate)
 
@@ -471,7 +493,8 @@ Typical SaaS utilisation is 30–50 % → gross margin ~65–80 %. **Monitoring:
 1. **GitHub repository:** `BraiGAIP/openseo` must be created by the owner (the Claude GitHub App cannot create repositories) and the Claude app installed on it; then the code is pushed with full history.
 2. **Public visibility:** the repository starts private; flip to public when the MVP is ready for an open-source launch.
 3. **Pricing validation:** confirm 49 € / 149 € with 5–10 target customers before launch; decide USD pricing for non-EUR markets.
-4. **Trademark/domain:** check "OpenSEO" name availability (domain, trademark) before public launch.
+4. **Trademark/domain:** check "BraiSEO" name availability (trademark) before public launch; domain `brai.build` is owned — planned app address `seo.brai.build` (not yet configured).
+5. **License (D11):** AGPL-3.0 kept for now after the rename. Decide before the repository or product goes public: keep open source (self-hosting allowed, changes must be shared) or make BraiSEO proprietary (remove AGPL, keep the repo private). Nothing has been published yet, so both options are still open.
 
 ---
 

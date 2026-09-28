@@ -1,0 +1,189 @@
+{
+  "Common": {
+    "appName": "BraiSEO",
+    "signIn": "Logga in",
+    "signOut": "Logga ut",
+    "openApp": "Öppna instrumentpanelen",
+    "language": "Språk",
+    "save": "Spara",
+    "cancel": "Avbryt",
+    "delete": "Ta bort",
+    "loading": "Arbetar…",
+    "unlimited": "Obegränsat",
+    "notAvailable": "—"
+  },
+  "Metadata": {
+    "title": "BraiSEO — SEO-plattform med öppen källkod",
+    "description": "Rankningsbevakning, webbplatsgranskningar, konkurrentanalys och white label-rapporter på prisvärd API-data. Öppen källkod under AGPL-3.0."
+  },
+  "Landing": {
+    "eyebrow": "Öppen källkod · AGPL-3.0",
+    "title": "SEO-insikter utan storbolagspriser",
+    "subtitle": "Bevaka rankningar, granska webbplatser, kartlägg konkurrenternas sökord och skicka varumärkta kundrapporter — byggt på transparent sökdata som betalas efter användning.",
+    "cta": "Kom igång gratis",
+    "secondaryCta": "Se priser",
+    "featuresTitle": "Allt ett SEO-team behöver",
+    "features": {
+      "rank": {
+        "title": "Rankningsbevakning",
+        "body": "Dagliga positioner per land, språk och enhet, inklusive AI Overviews och andra SERP-funktioner."
+      },
+      "audit": {
+        "title": "Webbplatsgranskning",
+        "body": "Crawla webbplatsen, hitta tekniska problem och kontrollera AI-beredskap med ett hälsovärde."
+      },
+      "competitors": {
+        "title": "Konkurrentgap",
+        "body": "Se vilka sökord konkurrenterna rankar på och var du saknas eller är svag."
+      },
+      "reports": {
+        "title": "White label-rapporter",
+        "body": "Varumärkta webb- och PDF-rapporter till kunder på svenska, finska eller engelska."
+      }
+    },
+    "pricingTitle": "Enkel prissättning",
+    "pricingSubtitle": "Priser exkl. moms. Betalplaner kan överskrida kvoter med användningsbaserad debitering.",
+    "perMonth": "/ mån",
+    "limits": {
+      "projects": "{count, plural, one {# projekt} other {# projekt}}",
+      "keywords": "{count, plural, other {# bevakade sökord}}",
+      "seats": "{count, plural, one {# användare} other {# användare}}",
+      "auditPages": "{count, plural, other {# granskade sidor / mån}}",
+      "whiteLabel": "White label-rapporter",
+      "api": "API-åtkomst",
+      "projectsUnlimited": "Obegränsat antal projekt",
+      "keywordsUnlimited": "Obegränsat antal sökord",
+      "seatsUnlimited": "Obegränsat antal användare",
+      "auditPagesUnlimited": "Obegränsat antal granskade sidor"
+    }
+  },
+  "Login": {
+    "title": "Logga in på BraiSEO",
+    "description": "Vi mejlar dig en säker inloggningslänk. Inget lösenord behövs.",
+    "email": "Jobbmejl",
+    "submit": "Skicka inloggningslänk",
+    "sent": "Kolla din inkorg — inloggningslänken gäller i en timme.",
+    "invalidEmail": "Ange en giltig e-postadress.",
+    "failed": "Vi kunde inte skicka länken. Försök igen om en stund.",
+    "callbackFailed": "Inloggningslänken är ogiltig eller har gått ut. Begär en ny."
+  },
+  "App": {
+    "workspaces": "Arbetsytor",
+    "personal": "Personlig",
+    "projects": "Projekt",
+    "noProjects": "Inga projekt ännu. Lägg till din första webbplats för att börja bevaka rankningar.",
+    "newProject": "Nytt projekt",
+    "projectName": "Namn",
+    "domain": "Domän",
+    "domainHint": "Till exempel exempel.se — utan https:// eller sökväg.",
+    "location": "Sökmarknad",
+    "clientName": "Kund (valfritt)",
+    "createProject": "Skapa projekt",
+    "keywordsCount": "{count, plural, =0 {Inga sökord} one {# sökord} other {# sökord}}",
+    "usageTitle": "Användning denna faktureringsperiod",
+    "plan": "Plan: {plan}",
+    "metric": {
+      "serp_query": "SERP-kontroller",
+      "keyword_lookup": "Sökordsuppslag",
+      "audit_page": "Granskade sidor",
+      "backlink_query": "Länkförfrågningar",
+      "ai_credit": "AI-krediter",
+      "api_call": "API-anrop",
+      "report_render": "Rapporter"
+    },
+    "usedOf": "{used} av {quota}",
+    "usedUnlimited": "{used} använt"
+  },
+  "Project": {
+    "back": "Alla projekt",
+    "rankings": "Rankningar",
+    "range": "Period",
+    "rangeDays": "{days} dagar",
+    "kpi": {
+      "tracked": "Bevakade sökord",
+      "avgPosition": "Genomsnittlig position",
+      "top3": "Topp 3",
+      "top10": "Topp 10",
+      "visibility": "Synlighet",
+      "vsStart": "jämfört med periodens början"
+    },
+    "chartTitle": "Position över tid",
+    "chartHint": "Välj upp till 8 sökord i tabellen för att jämföra. Position 1 är högst upp.",
+    "chartEmpty": "Ingen rankningsdata ännu. Den första kontrollen körs automatiskt när sökord har lagts till.",
+    "positionAxis": "Position",
+    "keywordsTitle": "Sökord",
+    "addKeywords": "Lägg till sökord",
+    "keywordsPlaceholder": "Ett sökord per rad",
+    "device": "Enhet",
+    "desktop": "Dator",
+    "mobile": "Mobil",
+    "add": "Lägg till",
+    "added": "{count, plural, one {# sökord tillagt} other {# sökord tillagda}}",
+    "noKeywords": "Inga sökord ännu.",
+    "col": {
+      "select": "Visa i diagram",
+      "keyword": "Sökord",
+      "position": "Position",
+      "change": "Förändring",
+      "best": "Bästa",
+      "volume": "Sökvolym",
+      "url": "Rankande URL",
+      "checked": "Senast kontrollerad",
+      "difficulty": "KD",
+      "difficultyLong": "Sökordssvårighet (0–100): hur svårt det är att nå topp 10"
+    },
+    "notRanking": "Inte i topp {depth}",
+    "notChecked": "Väntar",
+    "improved": "Förbättrad med {count}",
+    "declined": "Försämrad med {count}",
+    "unchanged": "Oförändrad",
+    "remove": "Ta bort sökord",
+    "selectLimit": "Du kan jämföra upp till 8 sökord åt gången.",
+    "checkNow": "Kontrollera nu",
+    "checking": "Kontrollerar…",
+    "checkingHint": "Resultaten uppdateras automatiskt.",
+    "checkQueued": "{count, plural, one {# sökord} other {# sökord}} i kö. Resultat om några minuter.",
+    "checkAvailableAt": "Nästa manuella kontroll kl. {time}",
+    "demoBadge": "Demo",
+    "demoNotice": "De här placeringarna är simulerade eftersom ingen sökdatakälla är ansluten ännu. Riktiga placeringar ersätter dem vid nästa kontroll när en källa har konfigurerats.",
+    "difficulty": {
+      "easy": "Lätt",
+      "moderate": "Medel",
+      "hard": "Svår",
+      "veryHard": "Mycket svår"
+    }
+  },
+  "Errors": {
+    "generic": "Något gick fel. Försök igen.",
+    "planLimit": "Din plans gräns för {limit, select, max_projects {projekt} max_keywords {sökord} max_seats {användare} max_competitors_per_project {konkurrenter} other {denna funktion}} är nådd. Uppgradera för att lägga till fler.",
+    "invalidDomain": "Ange en domän som exempel.se.",
+    "duplicate": "Det finns redan.",
+    "required": "Fältet är obligatoriskt.",
+    "forbidden": "Du har inte behörighet till detta.",
+    "cooldown": "En kontroll körs redan eller kördes nyligen. Försök igen senare.",
+    "noKeywords": "Lägg till sökord först.",
+    "quotaExceeded": "Månadens kvot för {metric, select, serp_query {rankningskontroller} audit_page {webbplatsgranskningar} other {användning}} är slut. Uppgradera för att fortsätta."
+  },
+  "Changes": {
+    "title": "SERP-förändringar",
+    "hint": "Vad som ändrats sedan varje sökords föregående kontroll.",
+    "empty": "Inga förändringar än. Förändringar visas från och med den andra kontrollen.",
+    "kind": {
+      "started_ranking": "Började ranka på #{to}",
+      "stopped_ranking": "Föll ur de kontrollerade resultaten (var #{from})",
+      "entered_top3": "Tog sig in på topp 3: #{from} → #{to}",
+      "left_top3": "Föll ur topp 3: #{from} → #{to}",
+      "entered_top10": "Nådde första sidan: #{from} → #{to}",
+      "left_top10": "Föll från första sidan: #{from} → #{to}",
+      "position_up": "Upp {delta} placeringar: #{from} → #{to}",
+      "position_down": "Ned {delta} placeringar: #{from} → #{to}",
+      "url_changed": "Google rankar nu en annan sida: {url}",
+      "feature_gained": "Ny SERP-funktion: {feature, select, ai_overview {AI-översikt} featured_snippet {Utvalt utdrag} people_also_ask {Andra frågar också} local_pack {Lokala resultat} video {Videor} images {Bilder} top_stories {Nyheter} knowledge_graph {Kunskapspanel} shopping {Shoppingresultat} related_searches {Relaterade sökningar} other {{raw}}}",
+      "feature_lost": "SERP-funktion försvann: {feature, select, ai_overview {AI-översikt} featured_snippet {Utvalt utdrag} people_also_ask {Andra frågar också} local_pack {Lokala resultat} video {Videor} images {Bilder} top_stories {Nyheter} knowledge_graph {Kunskapspanel} shopping {Shoppingresultat} related_searches {Relaterade sökningar} other {{raw}}}",
+      "ai_overview_cited": "Din webbplats citeras nu i AI-översikten",
+      "ai_overview_uncited": "Din webbplats citeras inte längre i AI-översikten",
+      "competitor_entered": "{domain} tog sig in på topp 10 (#{rank})",
+      "competitor_left": "{domain} föll ur topp 10 (var #{previousRank})"
+    }
+  }
+}

@@ -13,3 +13,65 @@ jobs:
       - uses: actions/checkout@v4
       - name: Run migration + tenant-isolation tests (PostgreSQL 16)
         run: ./tests/db/run.sh
+
+  web:
+    name: Web app (lint, typecheck, build)
+    runs-on: ubuntu-24.04
+    env:
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run build
+
+  worker:
+    name: Python worker (ruff, pytest incl. Postgres e2e)
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: workers/python
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: workers/python/pyproject.toml
+      - run: pip install -e ".[dev]"
+      - run: ruff check .
+      - run: ruff format --check .
+      - run: pytest -q
+
+  worker-image:
+    name: Worker Docker image
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t braiseo-workers:ci workers/python
+      - run: docker run --rm braiseo-workers:ci python -c "import openseo_workers, httpx, psycopg, psycopg_pool"
+
+  web-image:
+    name: Web Docker image
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build (public Supabase values from apps/web/fly.toml)
+        run: |
+          arg() { sed -n "s/^ *$1 = \"\(.*\)\"/\1/p" apps/web/fly.toml | head -1; }
+          docker build -f apps/web/Dockerfile -t braiseo-web:ci \
+            --build-arg NEXT_PUBLIC_SUPABASE_URL="$(arg NEXT_PUBLIC_SUPABASE_URL)" \
+            --build-arg NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY="$(arg NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY)" \
+            --build-arg NEXT_PUBLIC_SITE_URL=http://localhost:3000 .
+      - name: Container serves the app as a non-root user
+        run: |
+          docker run -d --name web -p 3000:3000 braiseo-web:ci
+          for i in $(seq 1 20); do curl -sf -o /dev/null http://127.0.0.1:3000/fi && break; sleep 1; done
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/fi)" = 200
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/app)" = 307
+          test "$(docker exec web id -u)" = 10001

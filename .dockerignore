@@ -1,0 +1,11 @@
+# Build context for apps/web/Dockerfile (the worker image uses workers/python as its context).
+**/node_modules
+**/.next
+**/.env*
+!.env.example
+.git
+workers
+supabase
+tests
+docs
+**/*.tsbuildinfo
