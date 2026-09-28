@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "openseo-workers"
 version = "0.1.0"
-description = "OpenSEO background workers (rank tracking, keyword data)"
+description = "BraiSEO background workers (rank tracking, keyword data)"
 license = "AGPL-3.0-only"
 requires-python = ">=3.11"
 dependencies = [

@@ -1,6 +1,6 @@
 {
   "Common": {
-    "appName": "OpenSEO",
+    "appName": "BraiSEO",
     "signIn": "Kirjaudu",
     "signOut": "Kirjaudu ulos",
     "openApp": "Avaa hallintapaneeli",
@@ -13,7 +13,7 @@
     "notAvailable": "—"
   },
   "Metadata": {
-    "title": "OpenSEO — avoimen lähdekoodin SEO-alusta",
+    "title": "BraiSEO — avoimen lähdekoodin SEO-alusta",
     "description": "Sijoitusseuranta, sivustoauditoinnit, kilpailija-analyysi ja white-label-raportit edullisella API-datalla. Avointa lähdekoodia (AGPL-3.0)."
   },
   "Landing": {
@@ -58,7 +58,7 @@
     }
   },
   "Login": {
-    "title": "Kirjaudu OpenSEO:hon",
+    "title": "Kirjaudu BraiSEO:hon",
     "description": "Lähetämme sinulle turvallisen kirjautumislinkin sähköpostiin. Salasanaa ei tarvita.",
     "email": "Työsähköposti",
     "submit": "Lähetä kirjautumislinkki",

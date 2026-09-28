@@ -1,6 +1,6 @@
 {
   "Common": {
-    "appName": "OpenSEO",
+    "appName": "BraiSEO",
     "signIn": "Sign in",
     "signOut": "Sign out",
     "openApp": "Open dashboard",
@@ -13,7 +13,7 @@
     "notAvailable": "—"
   },
   "Metadata": {
-    "title": "OpenSEO — open-source SEO platform",
+    "title": "BraiSEO — open-source SEO platform",
     "description": "Rank tracking, site audits, competitor research and white-label reports on affordable API data. Open source under AGPL-3.0."
   },
   "Landing": {
@@ -58,7 +58,7 @@
     }
   },
   "Login": {
-    "title": "Sign in to OpenSEO",
+    "title": "Sign in to BraiSEO",
     "description": "We'll e-mail you a secure sign-in link. No password needed.",
     "email": "Work e-mail",
     "submit": "Send sign-in link",

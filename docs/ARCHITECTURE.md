@@ -1,4 +1,4 @@
-# OpenSEO – Architecture
+# BraiSEO – Architecture
 
 > **Status:** v0.2 · 2026-09-27 · decisions D1–D14 accepted
 > **Goal:** an open-source (AGPL-3.0), API-data-driven SEO platform — a SEMrush alternative — for our own sites, client work and as a commercial multi-tenant SaaS.
@@ -19,11 +19,12 @@
 | D7 | AI | **Claude API with model tiering**: bulk work on lighter models via **Message Batches API (−50 %)**, deep analysis on **Opus** | Quality where it matters, lowest cost for high-volume classification. See §9. |
 | D8 | Billing | **Stripe Billing: flat subscription + Billing Meters** for overage | Legacy usage records API was removed in `2025-03-31.basil`; Meters are the only supported path. |
 | D9 | Reports | **One React template → web (`/r/[token]`) + PDF (Playwright)**, white-label per organization | Single source for web and PDF; branding + custom domain on Agency. |
-| D10 | Repository | **Own repository `BraiGAIP/openseo`** | Keeps OpenSEO independent of other products and their Supabase projects. |
+| D10 | Repository | **Own repository `BraiGAIP/openseo`** | Keeps BraiSEO independent of other products and their Supabase projects. |
 | D11 | License | **AGPL-3.0** | Anyone may self-host and modify; anyone offering it as a network service must publish their changes → protects against closed SaaS forks. |
 | D12 | Market & language | **International from day one, English first**, i18n-ready for **Finnish and Swedish** | Largest addressable market; FI/SV give a home-market edge. |
 | D13 | Pricing | **Free 0 € · Pro 49 €/mo · Agency 149 €/mo** (+ Enterprise on request) | Accepted; see §11. |
 | D14 | Migrations | Only via files in `supabase/migrations`, verified by `tests/db/run.sh` and a schema fingerprint before production | Reproducible, reviewable schema; no dashboard drift. |
+| D15 | Product name | **BraiSEO** (renamed from OpenSEO, 09/2026). Visible texts, Fly apps (`braiseo-web`, `braiseo-workers`) and docs use the new name; internal code names (`@openseo/*`, `openseo_workers`, repo, Supabase project) stay | Renaming internal identifiers adds risk without user benefit. The AGPL-3.0 choice (D11) is open for review — see §15. |
 
 ---
 
@@ -200,7 +201,7 @@ API routes run with the service role (callers have no Supabase JWT), so **every 
 
 ### 5.5 Other controls
 - Secrets (GSC OAuth tokens, BYOK provider keys) in **Supabase Vault**; tables store only references.
-- Crawler: SSRF protection (block private ranges, metadata endpoints, redirects into internal networks), `robots.txt` respected by default, identifiable UA `OpenSEOBot/1.0 (+https://…/bot)`, per-host rate limits.
+- Crawler: SSRF protection (block private ranges, metadata endpoints, redirects into internal networks), `robots.txt` respected by default, identifiable UA `BraiSEOBot/1.0 (+https://brai.build/bot)`, per-host rate limits.
 - Prompt injection: crawled content is **data, not instructions** — wrapped in document blocks, outputs validated against JSON schemas, and the model has no tools that write to the database.
 - GDPR: DPA for customers, EU data residency, user deletion removes personal data and anonymises `audit_log`.
 
@@ -399,7 +400,7 @@ List prices per 1M tokens (input / output): Haiku 4.5 USD 1 / 5 · Sonnet 5 USD 
 
 - **One template, two outputs:** React Server Component report (`/r/[token]`) → same HTML to PDF via Playwright (`report_render` worker) → `reports/<org_id>/<report_id>.pdf` in Storage.
 - **Sections (`reports.sections`):** KPI cards (visibility, average position, top-3/top-10 keywords, estimated traffic), rank trend, winners/losers, SERP features, audit health score + top issues, competitor comparison, AI narrative, GSC clicks.
-- **White-label (Agency):** logo, colours, custom footer, no "Powered by OpenSEO", **custom domain** (`reports.agency.com` CNAME → Vercel, automatic TLS), sender name = agency.
+- **White-label (Agency):** logo, colours, custom footer, no "Powered by BraiSEO", **custom domain** (`reports.agency.com` CNAME → Vercel, automatic TLS), sender name = agency.
 - **Localisation:** report language from `reports.locale` (`en`/`fi`/`sv`), locale-aware number/date/currency formatting.
 - **Sharing:** random token (only its hash is stored), expiry, optional password; scheduled monthly reports (`schedule_cron`, `recipients`).
 - **Branding snapshot** stored at render time → old reports don't change when branding changes.
@@ -427,7 +428,7 @@ List prices per 1M tokens (input / output): Haiku 4.5 USD 1 / 5 · Sonnet 5 USD 
 | White-label + custom domain | – | – | ✓ | ✓ |
 | Metered overage | – | ✓ | ✓ | ✓ |
 
-Benchmark: SEMrush Pro USD 139.95/mo, Guru USD 249.95/mo, Business USD 499.95/mo → OpenSEO is **substantially cheaper** and competes on transparency (usage-based, API included, white-label from 149 €).
+Benchmark: SEMrush Pro USD 139.95/mo, Guru USD 249.95/mo, Business USD 499.95/mo → BraiSEO is **substantially cheaper** and competes on transparency (usage-based, API included, white-label from 149 €).
 
 ### 11.2 Unit economics (Pro, 100 % utilisation, estimate)
 
@@ -492,7 +493,8 @@ Typical SaaS utilisation is 30–50 % → gross margin ~65–80 %. **Monitoring:
 1. **GitHub repository:** `BraiGAIP/openseo` must be created by the owner (the Claude GitHub App cannot create repositories) and the Claude app installed on it; then the code is pushed with full history.
 2. **Public visibility:** the repository starts private; flip to public when the MVP is ready for an open-source launch.
 3. **Pricing validation:** confirm 49 € / 149 € with 5–10 target customers before launch; decide USD pricing for non-EUR markets.
-4. **Trademark/domain:** check "OpenSEO" name availability (domain, trademark) before public launch.
+4. **Trademark/domain:** check "BraiSEO" name availability (trademark) before public launch; domain `brai.build` is owned — planned app address `seo.brai.build` (not yet configured).
+5. **License (D11):** AGPL-3.0 kept for now after the rename. Decide before the repository or product goes public: keep open source (self-hosting allowed, changes must be shared) or make BraiSEO proprietary (remove AGPL, keep the repo private). Nothing has been published yet, so both options are still open.
 
 ---
 

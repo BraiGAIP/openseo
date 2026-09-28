@@ -4,7 +4,7 @@ name: Deploy web app (Fly.io)
 # Runs on every push to main that touches the web app, or manually from the Actions tab.
 #
 # Repository secret:   FLY_API_TOKEN (same token as the worker deploy)
-# Optional variables:  FLY_WEB_APP – app name if "openseo-web" is taken
+# Optional variables:  FLY_WEB_APP – app name if "braiseo-web" is taken
 #                      SITE_URL    – public URL once a custom domain is set up
 #                                    (default https://<app>.fly.dev)
 # Supabase public URL and publishable key are in apps/web/fly.toml.
@@ -30,7 +30,7 @@ jobs:
     runs-on: ubuntu-24.04
     env:
       FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
-      FLY_WEB_APP: ${{ vars.FLY_WEB_APP || 'openseo-web' }}
+      FLY_WEB_APP: ${{ vars.FLY_WEB_APP || 'braiseo-web' }}
       SITE_URL: ${{ vars.SITE_URL }}
     steps:
       - uses: actions/checkout@v4

@@ -1,4 +1,7 @@
-# OpenSEO
+# BraiSEO
+
+> Product name **BraiSEO** (formerly OpenSEO). Internal code names (`@openseo/*`,
+> `openseo_workers`, the repository name) are unchanged.
 
 Open-source, API-data-driven SEO platform — a SEMrush alternative — for your own
 sites, client work and as a multi-tenant SaaS: rank tracking, keyword research,
@@ -49,18 +52,18 @@ Both apps deploy from GitHub Actions when `main` changes (or manually: Actions �
 
 | App | Workflow | Config | Cost (approx.) |
 |---|---|---|---|
-| Web (`openseo-web`) | `.github/workflows/deploy-web.yml` | `apps/web/fly.toml`, `apps/web/Dockerfile` (context: repo root) | $0–4/month: sleeps when idle |
-| Worker (`openseo-workers`) | `.github/workflows/deploy-worker.yml` | `workers/python/fly.toml` | ~$3.3/month: always on |
+| Web (`braiseo-web`) | `.github/workflows/deploy-web.yml` | `apps/web/fly.toml`, `apps/web/Dockerfile` (context: repo root) | $0–4/month: sleeps when idle |
+| Worker (`braiseo-workers`) | `.github/workflows/deploy-worker.yml` | `workers/python/fly.toml` | ~$3.3/month: always on |
 
 Repository secrets: `FLY_API_TOKEN`, `DATABASE_URL`, `DATAFORSEO_LOGIN`, `DATAFORSEO_PASSWORD`,
 optional `SERPER_API_KEY`. Details in `workers/python/README.md`.
 
 After the first web deploy, add the site URL to Supabase → Authentication → URL Configuration
-(*Site URL* `https://openseo-web.fly.dev`, *Redirect URLs* `https://openseo-web.fly.dev/**`),
+(*Site URL* `https://braiseo-web.fly.dev`, *Redirect URLs* `https://braiseo-web.fly.dev/**`),
 otherwise magic links point to localhost.
 
 ## License
 
 [GNU Affero General Public License v3.0](LICENSE). If you run a modified version
-of OpenSEO as a network service, you must make your source code available to its
+of BraiSEO as a network service, you must make your source code available to its
 users.

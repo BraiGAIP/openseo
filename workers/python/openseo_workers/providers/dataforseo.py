@@ -95,7 +95,7 @@ class DataForSEOProvider:
             base_url=base_url,
             auth=httpx.BasicAuth(login, password),
             timeout=httpx.Timeout(60.0, connect=10.0),
-            headers={"User-Agent": "OpenSEO-worker/0.1 (+https://github.com/BraiGAIP/openseo)"},
+            headers={"User-Agent": "BraiSEO-worker/0.1 (+https://brai.build)"},
         )
 
     async def aclose(self) -> None:

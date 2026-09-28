@@ -1,7 +1,7 @@
-# Fly.io config for the OpenSEO workers.
+# Fly.io config for the BraiSEO workers.
 # Deploy:   GitHub Actions (.github/workflows/deploy-worker.yml) or: cd workers/python && fly deploy --ha=false
 # Secrets:  fly secrets set DATABASE_URL=... DATAFORSEO_LOGIN=... DATAFORSEO_PASSWORD=...
-app = "openseo-workers"
+app = "braiseo-workers"
 primary_region = "fra"            # same metro as Supabase eu-central-1
 kill_signal = "SIGTERM"
 kill_timeout = 300                # finish in-flight jobs (runner stops claiming on SIGTERM)

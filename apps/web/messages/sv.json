@@ -1,6 +1,6 @@
 {
   "Common": {
-    "appName": "OpenSEO",
+    "appName": "BraiSEO",
     "signIn": "Logga in",
     "signOut": "Logga ut",
     "openApp": "Öppna instrumentpanelen",
@@ -13,7 +13,7 @@
     "notAvailable": "—"
   },
   "Metadata": {
-    "title": "OpenSEO — SEO-plattform med öppen källkod",
+    "title": "BraiSEO — SEO-plattform med öppen källkod",
     "description": "Rankningsbevakning, webbplatsgranskningar, konkurrentanalys och white label-rapporter på prisvärd API-data. Öppen källkod under AGPL-3.0."
   },
   "Landing": {
@@ -58,7 +58,7 @@
     }
   },
   "Login": {
-    "title": "Logga in på OpenSEO",
+    "title": "Logga in på BraiSEO",
     "description": "Vi mejlar dig en säker inloggningslänk. Inget lösenord behövs.",
     "email": "Jobbmejl",
     "submit": "Skicka inloggningslänk",

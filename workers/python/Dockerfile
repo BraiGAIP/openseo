@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-# OpenSEO background worker — deployed to Fly.io (see fly.toml).
+# BraiSEO background worker — deployed to Fly.io (see fly.toml).
 FROM python:3.12-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \

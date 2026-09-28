@@ -1,8 +1,8 @@
-# Fly.io config for the OpenSEO web app (Next.js standalone server).
+# Fly.io config for the BraiSEO web app (Next.js standalone server).
 # Deploy: GitHub Actions (.github/workflows/deploy-web.yml), or from the repo root:
 #   fly deploy --config apps/web/fly.toml --dockerfile apps/web/Dockerfile \
-#     --build-arg NEXT_PUBLIC_SITE_URL=https://openseo-web.fly.dev .
-app = "openseo-web"
+#     --build-arg NEXT_PUBLIC_SITE_URL=https://braiseo-web.fly.dev .
+app = "braiseo-web"
 primary_region = "fra"            # same metro as Supabase eu-central-1
 
 # The Dockerfile (apps/web/Dockerfile) is passed with --dockerfile; the build context is the repo root.

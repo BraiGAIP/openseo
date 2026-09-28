@@ -53,8 +53,8 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
-      - run: docker build -t openseo-workers:ci workers/python
-      - run: docker run --rm openseo-workers:ci python -c "import openseo_workers, httpx, psycopg, psycopg_pool"
+      - run: docker build -t braiseo-workers:ci workers/python
+      - run: docker run --rm braiseo-workers:ci python -c "import openseo_workers, httpx, psycopg, psycopg_pool"
 
   web-image:
     name: Web Docker image
@@ -64,13 +64,13 @@ jobs:
       - name: Build (public Supabase values from apps/web/fly.toml)
         run: |
           arg() { sed -n "s/^ *$1 = \"\(.*\)\"/\1/p" apps/web/fly.toml | head -1; }
-          docker build -f apps/web/Dockerfile -t openseo-web:ci \
+          docker build -f apps/web/Dockerfile -t braiseo-web:ci \
             --build-arg NEXT_PUBLIC_SUPABASE_URL="$(arg NEXT_PUBLIC_SUPABASE_URL)" \
             --build-arg NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY="$(arg NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY)" \
             --build-arg NEXT_PUBLIC_SITE_URL=http://localhost:3000 .
       - name: Container serves the app as a non-root user
         run: |
-          docker run -d --name web -p 3000:3000 openseo-web:ci
+          docker run -d --name web -p 3000:3000 braiseo-web:ci
           for i in $(seq 1 20); do curl -sf -o /dev/null http://127.0.0.1:3000/fi && break; sleep 1; done
           test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/fi)" = 200
           test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/app)" = 307

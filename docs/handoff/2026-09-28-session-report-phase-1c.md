@@ -1,4 +1,4 @@
-# OpenSEO – istuntoraportti: vaihe 1c (käyttöönotto, Tarkista nyt, Serper, KD, SERP-muutokset)
+# BraiSEO (ent. OpenSEO) – istuntoraportti: vaihe 1c (käyttöönotto, Tarkista nyt, Serper, KD, SERP-muutokset)
 
 > **Päivä:** 27.–28.9.2026
 > **Repo / haara:** `BraiGAIP/openseo`, haara `claude/phase-1-mvp` (PR [#1](https://github.com/BraiGAIP/openseo/pull/1))
@@ -74,8 +74,8 @@ Käyttäjän valinnat tässä istunnossa:
   - Jos DataForSEO epäonnistuu, samat SERPit haetaan Serperistä. Sivutus 10 tulosta kerrallaan pysähtyy omaan domainiin.
   - Hitaasti jonossa olevia DataForSEO-tehtäviä ei korvata Serperillä, koska uudelleenyritys on halvempi.
 - **Fly.io-deploy molemmille sovelluksille:**
-  - Web (`openseo-web`) nukkuu, kun sitä ei käytetä, ja maksaa noin 0–4 $/kk.
-  - Worker (`openseo-workers`) on aina päällä ja maksaa noin 3,3 $/kk.
+  - Web (`braiseo-web`) nukkuu, kun sitä ei käytetä, ja maksaa noin 0–4 $/kk.
+  - Worker (`braiseo-workers`) on aina päällä ja maksaa noin 3,3 $/kk.
 
 ---
 
@@ -121,8 +121,8 @@ KD- ja muutos-UI:ta ei ole nähty selaimessa kirjautuneena. Syy on sama: `*.supa
    - `DATAFORSEO_LOGIN`, `DATAFORSEO_PASSWORD`
    - valinnainen `SERPER_API_KEY`
 2. **Supabase → Authentication → URL Configuration:**
-   - Site URL `https://openseo-web.fly.dev`
-   - Redirect URLs `https://openseo-web.fly.dev/**`
+   - Site URL `https://braiseo-web.fly.dev`
+   - Redirect URLs `https://braiseo-web.fly.dev/**`
 3. **Yhdistä PR #1:** Ready for review → Merge. Kummankin sovelluksen deploy käynnistyy automaattisesti (Actions-välilehti).
 4. **Ensimmäinen testi:**
    1. Kirjaudu omalla sähköpostillasi.
@@ -139,6 +139,34 @@ KD- ja muutos-UI:ta ei ole nähty selaimessa kirjautuneena. Syy on sama: `*.supa
 
 ---
 
+## 5b. Nimenvaihto: OpenSEO → BraiSEO
+
+**Käyttäjän päätökset:**
+- Kaikki näkyvä nimetään uudelleen, samoin Fly-sovellukset.
+- Koodin sisäiset nimet (`@openseo/*`, `openseo_workers`, repo `BraiGAIP/openseo`, Supabase-projekti "OpenSEO") pysyvät ennallaan.
+- Arkkitehtuurin päätösloki: D15.
+
+| Kohde | Uusi |
+|---|---|
+| Käyttöliittymän tekstit, sivujen otsikot (EN/FI/SV) | BraiSEO |
+| Fly-sovellukset | `braiseo-web` → https://braiseo-web.fly.dev, `braiseo-workers` |
+| Workerin User-Agent DataForSEO:lle | `BraiSEO-worker/0.1 (+https://brai.build)` |
+| README, ARCHITECTURE, workerin README | BraiSEO |
+
+**Tärkeää:** Supabasen kirjautumisosoitteeksi tulee nyt `https://braiseo-web.fly.dev` (ei `openseo-web`).
+
+**Lisenssi (avoin kysymys, ARCHITECTURE §15 kohta 5):** AGPL-3.0 on toistaiseksi ennallaan. Se on päätettävä ennen kuin koodi tai tuote julkaistaan.
+- **AGPL:** kuka tahansa saa ajaa ja muokata BraiSEO:ta, mutta palveluna tarjotun muokatun version lähdekoodi on julkaistava. Tästä saa avoimen lähdekoodin markkinointiedun ja yhteisön.
+- **Suljettu:** koodi pysyy omana liikesalaisuutena, eikä kukaan saa käyttää sitä ilman lupaa. Tällöin "open-source"-maininnat poistetaan etusivulta.
+
+**Oma domain `seo.brai.build`** (valmisteltu, ei vielä päällä). Tee tämä vasta, kun perus-deploy toimii:
+1. Fly.io → `braiseo-web` → **Certificates** → *Add certificate* → `seo.brai.build`.
+2. Lisää brai.buildin DNS-palveluun Flyn näyttämät tietueet (yleensä CNAME `seo` → `braiseo-web.fly.dev`).
+3. GitHub → Settings → Secrets and variables → Actions → **Variables** → `SITE_URL` = `https://seo.brai.build` → aja *Deploy web app* uudelleen.
+4. Supabase → Authentication → URL Configuration: vaihda Site URL ja Redirect URL uuteen osoitteeseen.
+
+---
+
 ## 6. Seuraavat askeleet
 
 1. **Ensimmäinen oikea ajo** (kohdan 5 jälkeen) ja virheiden korjaus oikeaa dataa vastaan.
@@ -152,7 +180,7 @@ KD- ja muutos-UI:ta ei ole nähty selaimessa kirjautuneena. Syy on sama: `*.supa
 ## 7. Aloituskehote seuraavaan istuntoon
 
 ```
-Jatka OpenSEO-projektia (repo BraiGAIP/openseo). Jos PR #1 on yhdistetty, aloita
+Jatka BraiSEO-projektia (ent. OpenSEO; repo BraiGAIP/openseo). Jos PR #1 on yhdistetty, aloita
 uusi haara mainista; muuten jatka haarassa claude/phase-1-mvp.
 Lue ensin docs/handoff/2026-09-28-session-report-phase-1c.md ja docs/ARCHITECTURE.md (§8).
 Tee seuraavaksi: (1) tarkista ensimmäisen tuotantoajon tulokset (jobs-taulu, Fly-lokit)

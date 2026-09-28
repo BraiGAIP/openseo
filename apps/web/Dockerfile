@@ -1,5 +1,5 @@
-# OpenSEO web app (Next.js standalone). Build context: repository root.
-#   docker build -f apps/web/Dockerfile -t openseo-web .
+# BraiSEO web app (Next.js standalone). Build context: repository root.
+#   docker build -f apps/web/Dockerfile -t braiseo-web .
 # NEXT_PUBLIC_* values are inlined into the client bundle at build time.
 
 FROM node:22-alpine AS build

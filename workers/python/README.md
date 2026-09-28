@@ -1,4 +1,4 @@
-# OpenSEO workers (Python)
+# BraiSEO workers (Python)
 
 Background workers that consume the Postgres job queue (`public.jobs`) through the
 `claim_jobs` / `heartbeat_job` / `complete_job` / `fail_job` RPCs.
@@ -85,16 +85,16 @@ It creates the app on the first run, copies secrets from GitHub to Fly and pins 
 | `DATAFORSEO_LOGIN`, `DATAFORSEO_PASSWORD` | DataForSEO → API Access (API password, not the site password) |
 | `SERPER_API_KEY` (optional) | serper.dev → API Key; enables the fallback provider |
 
-Optional repository variable `FLY_APP` if the name `openseo-workers` is taken.
+Optional repository variable `FLY_APP` if the name `braiseo-workers` is taken.
 
 **From a terminal:**
 
 ```bash
-fly apps create openseo-workers            # once
-fly secrets set --app openseo-workers \
+fly apps create braiseo-workers            # once
+fly secrets set --app braiseo-workers \
   DATABASE_URL='<Supabase Dashboard → Connect → Transaction pooler URI (port 6543)>' \
   DATAFORSEO_LOGIN='…' DATAFORSEO_PASSWORD='…'
 cd workers/python && fly deploy --ha=false --env SERP_PROVIDER=dataforseo
-fly scale count rank=1 --app openseo-workers
-fly logs --app openseo-workers             # look for "SERP provider: DataForSEO"
+fly scale count rank=1 --app braiseo-workers
+fly logs --app braiseo-workers             # look for "SERP provider: DataForSEO"
 ```
