@@ -155,3 +155,17 @@ async def test_fallback_error_is_retryable_if_either_provider_may_recover():
     with pytest.raises(ProviderError) as exc:
         await FallbackSerpProvider(primary, secondary).fetch_serps(QUERIES)
     assert exc.value.retryable and "no credits" in str(exc.value)
+
+
+def test_credentials_are_stripped_of_invisible_whitespace():
+    s = Settings.from_env(
+        {
+            "DATABASE_URL": " postgresql://x\n",
+            "DATAFORSEO_LOGIN": "me@example.com ",
+            "DATAFORSEO_PASSWORD": "secret\u2028",
+            "SERPER_API_KEY": "\u2028",
+        }
+    )
+    assert s.database_url == "postgresql://x"
+    assert (s.dataforseo_login, s.dataforseo_password) == ("me@example.com", "secret")
+    assert s.serper_api_key is None
