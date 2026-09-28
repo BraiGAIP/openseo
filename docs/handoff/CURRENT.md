@@ -9,16 +9,16 @@ Updated: 2026-09-28 (user's Claude Code session report + GitHub check). This fil
 - PR #3 merged the Claude/Codex checkpoint instructions into `main` at `1b534114d7e966f951c2981d453b3dce3d4d444d`.
 - Detailed phase 1c report: [2026-09-28 session report](2026-09-28-session-report-phase-1c.md). Local checks reported there: 59 worker tests, database tests, and web lint/typecheck/build passed. The user also supplied a Claude Code transcript reporting green PR #1 CI.
 - The user confirms that **GitHub Actions secrets have been added**. Do not ask to add them again without first checking a specific missing secret or failed deployment.
-- **Deployment remains unresolved.** Both Fly deployment runs after PR #1 failed. Claude's fix is already pushed in [draft PR #2](https://github.com/BraiGAIP/openseo/pull/2), commit `4c4d3970447ff718ee845fda296dc128831f5694`; GitHub shows 5/5 CI checks passing. It replaces the hardcoded Fly organization with optional `FLY_ORG` or detection via `flyctl orgs list --json`, and strips surrounding whitespace from worker credentials to handle a reported U+2028 separator. **PR #2 is not merged or deployed.** Its merge triggers both Fly deployment workflows; verify deployment and authentication afterward. Any additional local/unpushed edits cannot be inspected here.
+- **Deployment still blocked by Fly authentication.** PR #2 was merged into `main` at `a1a3f190f97e3e65b110f8b4b56160c1c7e9848e`; it added Fly organization detection and strips surrounding whitespace from worker credentials. Both new deployment runs failed at the `Create the Fly app if it does not exist` step: `flyctl orgs list --json` returned `Error: unauthorized` ([web run](https://github.com/BraiGAIP/openseo/actions/runs/36427166555), [worker run](https://github.com/BraiGAIP/openseo/actions/runs/36427166875)). The configuration checks passed, so `FLY_API_TOKEN` is present but Fly rejects it for this command. No app was created or deployed by those runs. The user must replace the GitHub `FLY_API_TOKEN` secret with a fresh Fly org-scoped token that can manage the target organization; do not expose token values in logs or commits. Then re-run both failed workflows and inspect the next result.
 - Supabase Auth Site URL / Redirect URL and DataForSEO Labs availability have **not** been confirmed by the user in this handoff. The intended auth URL is `https://braiseo-web.fly.dev` and redirect pattern `https://braiseo-web.fly.dev/**`. Do not change production settings based only on this note.
 - The repository is public. Do not commit secrets, environment files, or customer data.
 
 ## Urgent next action
 
-1. Resume from [draft PR #2](https://github.com/BraiGAIP/openseo/pull/2); review the fix and check whether the interrupted Claude environment has any additional unpushed changes (`git status`). Preserve them.
-2. When authorized to deploy, mark PR #2 ready and merge it. This triggers both Fly deployment workflows. Confirm the actual web and worker runs and fix any new failures. Do not print or commit secret values.
-3. Verify a real login and data flow before describing the app as deployed. Confirm the Supabase Auth URLs and DataForSEO Labs if needed.
-4. Once deployment is stable, resume SERP change alerts and later the site audit crawler.
+1. The user replaces the existing GitHub Actions `FLY_API_TOKEN` with a freshly generated Fly org-scoped token for the organization that will host `braiseo-web` and `braiseo-workers`. The token must be updated in GitHub directly; never paste it into a chat or repository.
+2. Re-run the failed web and worker deploy workflows. If they reach the next stage, inspect any new failure and address it without leaking credentials. If Fly lists multiple organizations, set the non-secret repository variable `FLY_ORG` to the intended slug.
+3. Verify the app and a real login and data flow before saying it is live. Confirm Supabase Auth URLs and DataForSEO Labs only if needed.
+4. On returning to the interrupted Claude Code environment, preserve any unpushed edits (`git status`). Once deployment is stable, resume SERP change alerts and later the site audit crawler.
 
 ## Checkpoint routine
 
