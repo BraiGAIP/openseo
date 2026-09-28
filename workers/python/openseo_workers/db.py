@@ -12,7 +12,7 @@ import json
 from collections.abc import AsyncIterator, Iterable
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
-from datetime import timedelta
+from datetime import date, timedelta
 from decimal import Decimal
 from typing import Any
 
@@ -193,11 +193,12 @@ class Database:
                 """
                 insert into private.keyword_metrics
                   (keyword_normalized, location_code, language_code, search_volume, cpc_usd,
-                   competition, monthly_searches, provider, fetched_at)
-                values (public.normalize_keyword(%s), %s, %s, %s, %s, %s, %s, %s, now())
+                   competition, monthly_searches, keyword_difficulty, provider, fetched_at)
+                values (public.normalize_keyword(%s), %s, %s, %s, %s, %s, %s, %s, %s, now())
                 on conflict (keyword_normalized, location_code, language_code) do update
                   set search_volume = excluded.search_volume, cpc_usd = excluded.cpc_usd,
                       competition = excluded.competition, monthly_searches = excluded.monthly_searches,
+                      keyword_difficulty = excluded.keyword_difficulty,
                       provider = excluded.provider, fetched_at = excluded.fetched_at
                 """,
                 [
@@ -209,6 +210,7 @@ class Database:
                         m.cpc_usd,
                         m.competition,
                         Jsonb(m.monthly_searches) if m.monthly_searches else None,
+                        m.keyword_difficulty,
                         provider,
                     )
                     for m in metrics
@@ -222,7 +224,8 @@ class Database:
                 """
                 update public.keyword_tracking k
                    set search_volume = m.search_volume, cpc_usd = m.cpc_usd, competition = m.competition,
-                       monthly_searches = m.monthly_searches, metrics_updated_at = m.fetched_at
+                       monthly_searches = m.monthly_searches, keyword_difficulty = m.keyword_difficulty,
+                       metrics_updated_at = m.fetched_at
                   from private.keyword_metrics m
                  where k.id = any(%s::uuid[])
                    and m.keyword_normalized = k.keyword_normalized
@@ -240,24 +243,73 @@ class Database:
                 """
                 insert into public.keyword_positions
                   (keyword_id, check_date, organization_id, project_id, checked_at, position, url, title,
-                   serp_features, owns_ai_overview, depth_checked, estimated_traffic, provider, raw_ref)
+                   serp_features, owns_ai_overview, depth_checked, estimated_traffic, provider, raw_ref,
+                   top_domains)
                 select %(keyword_id)s, %(check_date)s, k.organization_id, k.project_id, now(),
                        %(position)s::smallint, %(url)s, %(title)s, %(serp_features)s::text[],
                        %(owns_ai_overview)s::boolean,
                        %(depth_checked)s::smallint,
                        round(public.ctr_for_position(%(position)s::integer)
                              * coalesce(k.search_volume, 0), 2),
-                       %(provider)s, %(raw_ref)s
+                       %(provider)s, %(raw_ref)s, %(top_domains)s::text[]
                   from public.keyword_tracking k where k.id = %(keyword_id)s
                 on conflict (keyword_id, check_date) do update
                   set checked_at = excluded.checked_at, position = excluded.position, url = excluded.url,
                       title = excluded.title, serp_features = excluded.serp_features,
                       owns_ai_overview = excluded.owns_ai_overview, depth_checked = excluded.depth_checked,
                       estimated_traffic = excluded.estimated_traffic, provider = excluded.provider,
-                      raw_ref = excluded.raw_ref
+                      raw_ref = excluded.raw_ref, top_domains = excluded.top_domains
                 """,
                 rows,
             )
+
+    async def fetch_previous_positions(
+        self, keyword_ids: list[str], before: date
+    ) -> dict[str, dict[str, Any]]:
+        """Latest check before `before` for each keyword (the baseline for change events)."""
+        if not keyword_ids:
+            return {}
+        async with self.tx() as conn:
+            cur = await conn.execute(
+                """
+                select distinct on (keyword_id)
+                       keyword_id::text, check_date, position, url, serp_features, owns_ai_overview,
+                       top_domains, provider
+                from public.keyword_positions
+                where keyword_id = any(%s::uuid[]) and check_date < %s
+                order by keyword_id, check_date desc
+                """,
+                (keyword_ids, before),
+            )
+            return {r["keyword_id"]: r for r in await cur.fetchall()}
+
+    async def replace_events(
+        self, check_date: date, events_by_keyword: dict[str, list[tuple[str, str, dict[str, Any]]]]
+    ) -> int:
+        """Replace the change events of `check_date` for these keywords (a re-check wins)."""
+        if not events_by_keyword:
+            return 0
+        rows = [
+            (keyword_id, check_date, kind, subject, Jsonb(_jsonable(payload)))
+            for keyword_id, events in events_by_keyword.items()
+            for kind, subject, payload in events
+        ]
+        async with self.tx() as conn:
+            await conn.execute(
+                "delete from public.keyword_events where keyword_id = any(%s::uuid[]) and check_date = %s",
+                (list(events_by_keyword), check_date),
+            )
+            if rows:
+                async with conn.cursor() as cur:
+                    await cur.executemany(
+                        """
+                        insert into public.keyword_events (keyword_id, check_date, kind, subject, payload)
+                        values (%s, %s, %s::public.keyword_event_kind, %s, %s)
+                        on conflict (keyword_id, check_date, kind, subject) do nothing
+                        """,
+                        rows,
+                    )
+        return len(rows)
 
     # ------------------------------------------------------------ usage
     async def record_usage(

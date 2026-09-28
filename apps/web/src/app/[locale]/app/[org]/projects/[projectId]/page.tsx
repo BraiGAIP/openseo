@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { AddKeywordsForm } from "@/components/rank/add-keywords-form";
 import { CheckNowButton } from "@/components/rank/check-now-button";
 import { DemoDataNotice } from "@/components/rank/demo-data-notice";
+import { SerpChanges } from "@/components/rank/serp-changes";
 import { RankDashboard } from "@/components/rank/rank-dashboard";
 import { StatTiles } from "@/components/rank/stat-tiles";
 import { Card, CardContent } from "@/components/ui/card";
@@ -14,6 +15,7 @@ import {
   getProject,
   getRankCheckStatus,
   getRankSummary,
+  getRecentChanges,
 } from "@/lib/data";
 import { cn } from "@/lib/utils";
 
@@ -34,11 +36,12 @@ export default async function ProjectPage({
   const project = await getProject(org.id, projectId);
   if (!project) notFound();
 
-  const [t, keywords, summary, checkStatus] = await Promise.all([
+  const [t, keywords, summary, checkStatus, changes] = await Promise.all([
     getTranslations("Project"),
     getKeywords(project.id),
     getRankSummary(project.id, days),
     getRankCheckStatus(project.id),
+    getRecentChanges(project.id, days),
   ]);
   const showsDemoData = keywords.some((k) => k.last_provider === "mock");
 
@@ -119,16 +122,16 @@ export default async function ProjectPage({
           initialHistory={initialHistory}
           canEdit={canEdit}
         />
-        {canEdit && (
-          <Card className="h-fit">
-            <CardContent className="pt-5">
-              <AddKeywordsForm
-                projectId={project.id}
-                defaultDevice={project.default_device}
-              />
-            </CardContent>
-          </Card>
-        )}
+        <div className="space-y-6">
+          {canEdit && (
+            <Card>
+              <CardContent className="pt-5">
+                <AddKeywordsForm projectId={project.id} defaultDevice={project.default_device} />
+              </CardContent>
+            </Card>
+          )}
+          <SerpChanges events={changes} />
+        </div>
       </div>
     </div>
   );

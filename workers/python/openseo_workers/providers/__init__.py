@@ -74,6 +74,7 @@ def build_serp_provider(settings: Settings, store: PendingTaskStore | None = Non
             base_url=settings.dataforseo_base_url,
             store=store,
             stop_on_match=settings.dataforseo_stop_on_match,
+            keyword_difficulty=settings.dataforseo_keyword_difficulty,
             max_wait=settings.dataforseo_max_wait,
             poll_interval=settings.dataforseo_poll_interval,
         )

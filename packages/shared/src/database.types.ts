@@ -655,6 +655,57 @@ export type Database = {
           },
         ]
       }
+      keyword_events: {
+        Row: {
+          check_date: string
+          created_at: string
+          id: number
+          keyword_id: string
+          kind: Database["public"]["Enums"]["keyword_event_kind"]
+          organization_id: string
+          payload: Json
+          project_id: string
+          subject: string
+        }
+        Insert: {
+          check_date: string
+          created_at?: string
+          id?: never
+          keyword_id: string
+          kind: Database["public"]["Enums"]["keyword_event_kind"]
+          organization_id: string
+          payload?: Json
+          project_id: string
+          subject?: string
+        }
+        Update: {
+          check_date?: string
+          created_at?: string
+          id?: never
+          keyword_id?: string
+          kind?: Database["public"]["Enums"]["keyword_event_kind"]
+          organization_id?: string
+          payload?: Json
+          project_id?: string
+          subject?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "keyword_events_keyword_id_fkey"
+            columns: ["keyword_id"]
+            isOneToOne: false
+            referencedRelation: "keyword_tracking"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "keyword_events_project_id_organization_id_fkey"
+            columns: ["project_id", "organization_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id", "organization_id"]
+          },
+        ]
+      }
       keyword_positions: {
         Row: {
           check_date: string
@@ -670,6 +721,7 @@ export type Database = {
           raw_ref: string | null
           serp_features: string[]
           title: string | null
+          top_domains: string[] | null
           url: string | null
         }
         Insert: {
@@ -686,6 +738,7 @@ export type Database = {
           raw_ref?: string | null
           serp_features?: string[]
           title?: string | null
+          top_domains?: string[] | null
           url?: string | null
         }
         Update: {
@@ -702,6 +755,7 @@ export type Database = {
           raw_ref?: string | null
           serp_features?: string[]
           title?: string | null
+          top_domains?: string[] | null
           url?: string | null
         }
         Relationships: [
@@ -1583,6 +1637,22 @@ export type Database = {
         | "failed"
         | "cancelled"
         | "dead"
+      keyword_event_kind:
+        | "started_ranking"
+        | "stopped_ranking"
+        | "entered_top3"
+        | "left_top3"
+        | "entered_top10"
+        | "left_top10"
+        | "position_up"
+        | "position_down"
+        | "url_changed"
+        | "feature_gained"
+        | "feature_lost"
+        | "ai_overview_cited"
+        | "ai_overview_uncited"
+        | "competitor_entered"
+        | "competitor_left"
       org_role: "viewer" | "admin" | "owner"
       report_status: "draft" | "queued" | "rendering" | "ready" | "failed"
       search_device: "desktop" | "mobile"
@@ -1753,6 +1823,23 @@ export const Constants = {
         "failed",
         "cancelled",
         "dead",
+      ],
+      keyword_event_kind: [
+        "started_ranking",
+        "stopped_ranking",
+        "entered_top3",
+        "left_top3",
+        "entered_top10",
+        "left_top10",
+        "position_up",
+        "position_down",
+        "url_changed",
+        "feature_gained",
+        "feature_lost",
+        "ai_overview_cited",
+        "ai_overview_uncited",
+        "competitor_entered",
+        "competitor_left",
       ],
       org_role: ["viewer", "admin", "owner"],
       report_status: ["draft", "queued", "rendering", "ready", "failed"],

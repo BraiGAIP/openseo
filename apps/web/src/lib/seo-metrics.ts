@@ -24,6 +24,36 @@ export function positionChange(
   return before - now;
 }
 
+export type DifficultyLevel = "easy" | "moderate" | "hard" | "veryHard";
+
+/** Keyword difficulty (0–100, DataForSEO Labs) bucketed for display. See docs/ARCHITECTURE.md §8.6. */
+export function difficultyLevel(kd: number | null | undefined): DifficultyLevel | null {
+  if (kd == null) return null;
+  if (kd < 30) return "easy";
+  if (kd < 50) return "moderate";
+  if (kd < 70) return "hard";
+  return "veryHard";
+}
+
+export type ChangeTone = "positive" | "negative" | "neutral";
+
+const POSITIVE = new Set(["started_ranking", "entered_top3", "entered_top10", "position_up", "ai_overview_cited"]);
+const NEGATIVE = new Set([
+  "stopped_ranking",
+  "left_top3",
+  "left_top10",
+  "position_down",
+  "ai_overview_uncited",
+  "competitor_entered",
+]);
+
+/** Whether a SERP change event is good or bad news for the tracked domain. */
+export function changeTone(kind: string): ChangeTone {
+  if (POSITIVE.has(kind)) return "positive";
+  if (NEGATIVE.has(kind)) return "negative";
+  return "neutral";
+}
+
 export const MAX_CHART_SERIES = 8;
 export const SERIES_COLORS = Array.from({ length: MAX_CHART_SERIES }, (_, i) => `var(--series-${i + 1})`);
 

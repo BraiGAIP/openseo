@@ -170,6 +170,26 @@ end $$;
 reset role;
 \echo ok 7 positions partitioned, snapshot trigger, private partitions not readable, rank summary respects RLS
 
+-- 7b. SERP change events: scope from keyword, tenant isolation, service-only writes
+select pg_temp.as_service();
+insert into public.keyword_events (keyword_id, check_date, kind, subject, payload, organization_id, project_id)
+values (:'kw_id', current_date, 'competitor_entered', 'kilpailija.fi', '{"rank": 3}', gen_random_uuid(), gen_random_uuid());
+reset role;
+do $$ begin
+  assert (select organization_id from public.keyword_events limit 1) = current_setting('t.agency_id')::uuid, 'event scope from keyword';
+end $$;
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000a', 'alice@agency.fi');
+do $$ begin assert (select count(*) from public.keyword_events) = 1, 'alice sees her events'; end $$;
+select pg_temp.expect_error(format($q$insert into public.keyword_events (keyword_id, check_date, kind) values (%L, current_date, 'url_changed')$q$, :'kw_id'), 'permission denied');
+reset role;
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000b', 'bob@client.fi');
+do $$ begin assert (select count(*) from public.keyword_events) = 0, 'bob sees no foreign events'; end $$;
+reset role;
+select pg_temp.as_service();
+select pg_temp.expect_error(format($q$insert into public.keyword_events (keyword_id, check_date, kind, subject) values (%L, current_date, 'competitor_entered', 'kilpailija.fi')$q$, :'kw_id'), 'duplicate key');
+reset role;
+\echo ok 7b serp change events: scoped, isolated, service-only writes, one per kind+subject per day
+
 -- 8. Invitations & roles ------------------------------------------------------
 select pg_temp.as_user('00000000-0000-0000-0000-00000000000a', 'alice@agency.fi');
 select public.invite_member(:'agency_id', 'Bob@Client.fi', 'viewer') as invite_token \gset

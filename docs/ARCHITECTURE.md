@@ -348,6 +348,26 @@ The **router** chooses: (1) the organization's BYOK key if configured (`integrat
 3. Join with our own data (`keyword_tracking` + Labs `ranked_keywords` for our domain) → `our_position` → `gap_type`.
 4. AI step: cluster missing keywords into topics, classify intent, produce content recommendations (§9).
 
+### 8.6 Keyword difficulty & SERP change tracking (implemented)
+The definitions below are the product's own; marketing copy and the blog should use them.
+
+**Keyword difficulty (KD, 0–100).** DataForSEO Labs `bulk_keyword_difficulty` (≤ 1,000 keywords per call): the chance of reaching the organic top 10, on a logarithmic scale, from the link profiles of the current top 10. Refreshed together with search volume every 30 days and cached in `private.keyword_metrics`, shared between tenants. If Labs is not enabled for the account, KD stays empty and search volume still works; a temporary outage retries the whole refresh on the next run. Display buckets: **0–29 easy · 30–49 moderate · 50–69 hard · 70–100 very hard**. Setting: `DATAFORSEO_KEYWORD_DIFFICULTY` (default on).
+
+**SERP change events** (`public.keyword_events`, written by `workers/python/openseo_workers/rank/changes.py`). Each check is compared with the keyword's previous check. There are no events for the first check, or when exactly one of the two checks is demo data (switching providers is not a SERP change). A re-check on the same day replaces that day's events.
+
+| Event | Rule |
+|---|---|
+| `started_ranking` / `stopped_ranking` | enters / leaves the checked depth |
+| `entered_top3` / `left_top3` | crosses position 3 |
+| `entered_top10` / `left_top10` | crosses position 10 (page one) |
+| `position_up` / `position_down` | moves at least `RANK_JUMP_THRESHOLD` places (default **5**) |
+| `url_changed` | the ranking URL changes (scheme, `www.` and trailing slash ignored), a cannibalisation signal |
+| `feature_gained` / `feature_lost` | a SERP feature appears / disappears (AI Overview, featured snippet, local pack, PAA, video …) |
+| `ai_overview_cited` / `ai_overview_uncited` | our domain starts / stops being cited in the AI Overview |
+| `competitor_entered` / `competitor_left` | another domain enters / leaves the organic top 10 (own domain and subdomains excluded) |
+
+There is at most one position event per check; the most significant one wins (ranking in/out > top 3 > top 10 > jump). A jump from 15 to 2 is therefore reported as "entered the top 3", not three times. The top-10 domains of every check are stored in `keyword_positions.top_domains`. The dashboard shows the events as a feed, marking good news, bad news and neutral changes; a new competitor in the top 10 counts as bad news. Later: e-mail/Slack alerts on selected event types, and a SERP volatility score per project.
+
 ---
 
 ## 9. AI analysis pipeline

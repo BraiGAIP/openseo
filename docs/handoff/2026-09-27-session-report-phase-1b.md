@@ -4,6 +4,7 @@
 > **Repo / haara:** `BraiGAIP/openseo`, haara `claude/phase-1-mvp` (PR [#1](https://github.com/BraiGAIP/openseo/pull/1))
 > **Tämä tiedosto:** `docs/handoff/2026-09-27-session-report-phase-1b.md`
 > **Edellinen raportti:** `docs/handoff/2026-09-27-session-report.md` (vaiheet 0 ja 1a)
+> **Seuraava raportti:** `docs/handoff/2026-09-28-session-report-phase-1c.md` (käyttöönotto, Tarkista nyt, Serper, KD, SERP-muutokset)
 
 ---
 

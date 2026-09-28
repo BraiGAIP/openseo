@@ -7,7 +7,8 @@ SERP: Google Organic, *advanced* results.
     Also used for urgent (manual "check now") requests regardless of the configured mode.
   `stop_crawl_on_match` stops crawling once the tracked domain is found, so only the pages
   up to our ranking are billed.
-Keyword data: POST /v3/keywords_data/google_ads/search_volume/live (≤1000 keywords, billed per call).
+Keyword data: POST /v3/keywords_data/google_ads/search_volume/live (≤1000 keywords, billed per call)
+and POST /v3/dataforseo_labs/google/bulk_keyword_difficulty/live (≤1000 keywords, 0–100 scale).
 
 Credentials: DATAFORSEO_LOGIN / DATAFORSEO_PASSWORD (HTTP Basic auth).
 """
@@ -33,6 +34,7 @@ from .base import (
     SerpQuery,
     SerpResult,
     normalize_domain,
+    normalize_keyword,
 )
 
 log = logging.getLogger(__name__)
@@ -46,6 +48,7 @@ PENDING_CODES = {TASK_HANDED, TASK_IN_QUEUE}
 MAX_TASKS_PER_POST = 100
 LIVE_CONCURRENCY = 8
 MAX_KEYWORDS_PER_VOLUME_CALL = 1000
+MAX_KEYWORDS_PER_DIFFICULTY_CALL = 1000
 # Google Ads limits for the search volume endpoint.
 MAX_KEYWORD_CHARS = 80
 MAX_KEYWORD_WORDS = 10
@@ -68,6 +71,7 @@ class DataForSEOProvider:
         base_url: str = "https://api.dataforseo.com",
         store: PendingTaskStore | None = None,
         stop_on_match: bool = True,
+        keyword_difficulty: bool = True,
         max_wait: float = 900.0,
         poll_interval: float = 10.0,
         client: httpx.AsyncClient | None = None,
@@ -80,6 +84,7 @@ class DataForSEOProvider:
         self.mode = mode
         self._store = store
         self._stop_on_match = stop_on_match
+        self._keyword_difficulty = keyword_difficulty
         self._max_wait = max_wait
         self._poll_interval = poll_interval
         self._sleep = sleep
@@ -261,7 +266,55 @@ class DataForSEOProvider:
                         status_code=code,
                     )
                 metrics.extend(parse_search_volume_item(item) for item in task.get("result") or [] if item)
+
+        if self._keyword_difficulty and eligible:
+            difficulty, kd_cost = await self._keyword_difficulties(eligible, location_code, language_code)
+            cost += kd_cost
+            by_keyword = {normalize_keyword(m.keyword): m for m in metrics}
+            for keyword, value in difficulty.items():
+                entry = by_keyword.get(keyword)
+                if entry is None:
+                    entry = by_keyword[keyword] = KeywordMetrics(keyword=keyword)
+                    metrics.append(entry)
+                entry.keyword_difficulty = value
         return KeywordMetricsBatch(metrics=metrics, cost_usd=cost)
+
+    async def _keyword_difficulties(
+        self, keywords: list[str], location_code: int, language_code: str
+    ) -> tuple[dict[str, int], Decimal]:
+        """Keyword difficulty from DataForSEO Labs, keyed by normalized keyword.
+
+        A permanent failure (e.g. Labs not enabled for the account) only drops difficulty;
+        a temporary one is raised so the whole metrics refresh is retried on the next run.
+        """
+        found: dict[str, int] = {}
+        cost = Decimal("0")
+        for start in range(0, len(keywords), MAX_KEYWORDS_PER_DIFFICULTY_CALL):
+            chunk = keywords[start : start + MAX_KEYWORDS_PER_DIFFICULTY_CALL]
+            try:
+                body = await self._request(
+                    "POST",
+                    "/v3/dataforseo_labs/google/bulk_keyword_difficulty/live",
+                    [{"keywords": chunk, "location_code": location_code, "language_code": language_code}],
+                )
+            except ProviderError as exc:
+                if exc.retryable:
+                    raise
+                log.warning("keyword difficulty unavailable (%s); continuing without it", exc)
+                return found, cost
+            cost += Decimal(str(body.get("cost") or 0))
+            for task in body.get("tasks") or []:
+                if task.get("status_code") != OK:
+                    code = task.get("status_code")
+                    if _retryable_status(code):
+                        raise ProviderError(f"keyword difficulty failed: {code}", status_code=code)
+                    log.warning("keyword difficulty failed: %s %s", code, task.get("status_message"))
+                    return found, cost
+                for result in task.get("result") or []:
+                    for item in (result or {}).get("items") or []:
+                        if item and item.get("keyword") and item.get("keyword_difficulty") is not None:
+                            found[normalize_keyword(item["keyword"])] = int(item["keyword_difficulty"])
+        return found, cost
 
 
 # ---------------------------------------------------------------- parsing

@@ -73,7 +73,7 @@ export async function getKeywords(projectId: string) {
   const { data, error } = await supabase
     .from("keyword_tracking")
     .select(
-      "id, keyword, device, location_code, search_volume, current_position, previous_position, best_position, current_url, last_check_date, last_provider, depth, serp_features",
+      "id, keyword, device, location_code, search_volume, keyword_difficulty, current_position, previous_position, best_position, current_url, last_check_date, last_provider, depth, serp_features",
     )
     .eq("project_id", projectId)
     .order("created_at");
@@ -126,4 +126,20 @@ export async function getRankCheckStatus(projectId: string) {
     ? new Date(new Date(lastManual.finished_at).getTime() + MANUAL_CHECK_COOLDOWN_MS).toISOString()
     : null;
   return { running, availableAt: availableAt && availableAt > new Date().toISOString() ? availableAt : null };
+}
+
+/** Latest SERP change events of a project (newest first), with the keyword text. */
+export async function getRecentChanges(projectId: string, days: number, limit = 30) {
+  const since = new Date(Date.now() - days * 86_400_000).toISOString().slice(0, 10);
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("keyword_events")
+    .select("id, check_date, kind, subject, payload, keyword_tracking!inner(keyword)")
+    .eq("project_id", projectId)
+    .gte("check_date", since)
+    .order("check_date", { ascending: false })
+    .order("id", { ascending: false })
+    .limit(limit);
+  if (error) throw error;
+  return data.map(({ keyword_tracking, ...event }) => ({ ...event, keyword: keyword_tracking.keyword }));
 }

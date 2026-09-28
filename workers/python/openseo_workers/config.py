@@ -41,12 +41,16 @@ class Settings:
     dataforseo_poll_interval: float = 10.0
     # Stop crawling the SERP once the tracked domain is found (billed per page crawled).
     dataforseo_stop_on_match: bool = True
+    # Keyword difficulty from DataForSEO Labs (refreshed with search volume, 30-day cache).
+    dataforseo_keyword_difficulty: bool = True
 
     serper_api_key: str | None = None
     serper_base_url: str = "https://google.serper.dev"
     serper_cost_per_credit: Decimal = Decimal("0.001")
 
     keyword_metrics_max_age_days: int = 30
+    # Minimum move (places) reported as a position_up / position_down change event.
+    rank_jump_threshold: int = 5
 
     @property
     def has_dataforseo_credentials(self) -> bool:
@@ -86,6 +90,8 @@ class Settings:
                 env.get("DATAFORSEO_POLL_INTERVAL", defaults.dataforseo_poll_interval)
             ),
             dataforseo_stop_on_match=_bool(env.get("DATAFORSEO_STOP_ON_MATCH"), True),
+            dataforseo_keyword_difficulty=_bool(env.get("DATAFORSEO_KEYWORD_DIFFICULTY"), True),
+            rank_jump_threshold=int(env.get("RANK_JUMP_THRESHOLD", defaults.rank_jump_threshold)),
             serper_api_key=env.get("SERPER_API_KEY") or None,
             serper_base_url=env.get("SERPER_BASE_URL", defaults.serper_base_url).rstrip("/"),
             serper_cost_per_credit=Decimal(

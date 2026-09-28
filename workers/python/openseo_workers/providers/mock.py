@@ -93,6 +93,7 @@ class MockProvider:
                     cpc_usd=round((seed % 500) / 100, 2),
                     competition=round((seed % 100) / 100, 2),
                     monthly_searches=None,
+                    keyword_difficulty=(seed >> 8) % 101,
                 )
             )
         return KeywordMetricsBatch(metrics=metrics, cost_usd=Decimal("0"))

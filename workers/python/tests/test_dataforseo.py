@@ -210,12 +210,23 @@ async def test_error_classification(response, retryable):
     assert exc.value.retryable is retryable
 
 
-async def test_keyword_metrics_batches_and_filters():
-    requests = []
+KD_PATH = "/v3/dataforseo_labs/google/bulk_keyword_difficulty/live"
+VOLUME_PATH = "/v3/keywords_data/google_ads/search_volume/live"
 
+
+def volume_and_difficulty_handler(requests, *, kd_response=None):
     def handler(request):
         body = json.loads(request.content)
-        requests.append(body)
+        requests.append((request.url.path, body))
+        keywords = body[0]["keywords"]
+        if request.url.path == KD_PATH:
+            if kd_response is not None:
+                return kd_response
+            items = [{"se_type": "google", "keyword": k, "keyword_difficulty": 42} for k in keywords]
+            result = [{"se_type": "google", "items_count": len(items), "items": items}]
+            return httpx.Response(
+                200, json=envelope([{"id": "d", "status_code": 20000, "result": result}], 0.02)
+            )
         items = [
             {
                 "keyword": k,
@@ -225,24 +236,65 @@ async def test_keyword_metrics_batches_and_filters():
                 "cpc": 1.23,
                 "monthly_searches": [{"year": 2026, "month": 8, "search_volume": 2400}],
             }
-            for k in body[0]["keywords"]
+            for k in keywords
         ]
         return httpx.Response(
             200, json=envelope([{"id": "v", "status_code": 20000, "result": items}], cost=0.075)
         )
 
-    provider, _ = make_provider(handler)
+    return handler
+
+
+async def test_keyword_metrics_batches_and_filters():
+    requests = []
+    provider, _ = make_provider(volume_and_difficulty_handler(requests))
     too_long = "x" * 81
     too_many_words = " ".join(["w"] * 11)
     keywords = [f"kw {i}" for i in range(1500)] + [too_long, too_many_words]
     batch = await provider.keyword_metrics(keywords, 2246, "fi")
-    assert [len(r[0]["keywords"]) for r in requests] == [1000, 500]
-    assert requests[0][0]["location_code"] == 2246 and requests[0][0]["language_code"] == "fi"
+    volume = [b for path, b in requests if path == VOLUME_PATH]
+    difficulty = [b for path, b in requests if path == KD_PATH]
+    assert [len(b[0]["keywords"]) for b in volume] == [1000, 500]
+    assert [len(b[0]["keywords"]) for b in difficulty] == [1000, 500]
+    assert volume[0][0]["location_code"] == 2246 and volume[0][0]["language_code"] == "fi"
+    assert difficulty[0][0] == {
+        "keywords": difficulty[0][0]["keywords"],
+        "location_code": 2246,
+        "language_code": "fi",
+    }
     assert len(batch.metrics) == 1500
-    assert batch.cost_usd == Decimal("0.150")
+    assert batch.cost_usd == Decimal("0.190")  # 2 × 0.075 volume + 2 × 0.02 difficulty
     m = batch.metrics[0]
-    assert (m.search_volume, m.cpc_usd, m.competition) == (1900, 1.23, 0.87)
+    assert (m.search_volume, m.cpc_usd, m.competition, m.keyword_difficulty) == (1900, 1.23, 0.87, 42)
     assert m.monthly_searches == [{"year": 2026, "month": 8, "search_volume": 2400}]
+
+
+async def test_keyword_difficulty_is_optional_when_labs_is_unavailable():
+    requests = []
+    forbidden = httpx.Response(200, json={"status_code": 40204, "status_message": "Access denied."})
+    provider, _ = make_provider(volume_and_difficulty_handler(requests, kd_response=forbidden))
+    batch = await provider.keyword_metrics(["akku"], 2246, "fi")
+    assert batch.metrics[0].search_volume == 1900 and batch.metrics[0].keyword_difficulty is None
+
+
+async def test_keyword_difficulty_outage_retries_the_whole_refresh():
+    requests = []
+    down = httpx.Response(503, text="unavailable")
+    provider, _ = make_provider(volume_and_difficulty_handler(requests, kd_response=down))
+    with pytest.raises(ProviderError) as exc:
+        await provider.keyword_metrics(["akku"], 2246, "fi")
+    assert exc.value.retryable
+
+
+async def test_keyword_difficulty_can_be_switched_off():
+    requests = []
+    client = httpx.AsyncClient(
+        base_url="https://api.dataforseo.com",
+        transport=httpx.MockTransport(volume_and_difficulty_handler(requests)),
+    )
+    provider = DataForSEOProvider("l", "p", client=client, keyword_difficulty=False)
+    await provider.keyword_metrics(["akku"], 2246, "fi")
+    assert [path for path, _ in requests] == [VOLUME_PATH]
 
 
 def test_parse_search_volume_handles_missing_data():

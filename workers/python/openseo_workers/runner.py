@@ -28,7 +28,10 @@ class Runner:
         self.db = db
         self.provider = provider
         rank_ctx = RankCheckContext(
-            db=db, provider=provider, metrics_max_age_days=settings.keyword_metrics_max_age_days
+            db=db,
+            provider=provider,
+            metrics_max_age_days=settings.keyword_metrics_max_age_days,
+            jump_threshold=settings.rank_jump_threshold,
         )
         self.handlers: dict[str, Handler] = {
             "rank_check": lambda job: handle_rank_check(job, rank_ctx),

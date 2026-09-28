@@ -128,7 +128,9 @@
       "best": "Bästa",
       "volume": "Sökvolym",
       "url": "Rankande URL",
-      "checked": "Senast kontrollerad"
+      "checked": "Senast kontrollerad",
+      "difficulty": "KD",
+      "difficultyLong": "Sökordssvårighet (0–100): hur svårt det är att nå topp 10"
     },
     "notRanking": "Inte i topp {depth}",
     "notChecked": "Väntar",
@@ -143,7 +145,13 @@
     "checkQueued": "{count, plural, one {# sökord} other {# sökord}} i kö. Resultat om några minuter.",
     "checkAvailableAt": "Nästa manuella kontroll kl. {time}",
     "demoBadge": "Demo",
-    "demoNotice": "De här placeringarna är simulerade eftersom ingen sökdatakälla är ansluten ännu. Riktiga placeringar ersätter dem vid nästa kontroll när en källa har konfigurerats."
+    "demoNotice": "De här placeringarna är simulerade eftersom ingen sökdatakälla är ansluten ännu. Riktiga placeringar ersätter dem vid nästa kontroll när en källa har konfigurerats.",
+    "difficulty": {
+      "easy": "Lätt",
+      "moderate": "Medel",
+      "hard": "Svår",
+      "veryHard": "Mycket svår"
+    }
   },
   "Errors": {
     "generic": "Något gick fel. Försök igen.",
@@ -155,5 +163,27 @@
     "cooldown": "En kontroll körs redan eller kördes nyligen. Försök igen senare.",
     "noKeywords": "Lägg till sökord först.",
     "quotaExceeded": "Månadens kvot för {metric, select, serp_query {rankningskontroller} audit_page {webbplatsgranskningar} other {användning}} är slut. Uppgradera för att fortsätta."
+  },
+  "Changes": {
+    "title": "SERP-förändringar",
+    "hint": "Vad som ändrats sedan varje sökords föregående kontroll.",
+    "empty": "Inga förändringar än. Förändringar visas från och med den andra kontrollen.",
+    "kind": {
+      "started_ranking": "Började ranka på #{to}",
+      "stopped_ranking": "Föll ur de kontrollerade resultaten (var #{from})",
+      "entered_top3": "Tog sig in på topp 3: #{from} → #{to}",
+      "left_top3": "Föll ur topp 3: #{from} → #{to}",
+      "entered_top10": "Nådde första sidan: #{from} → #{to}",
+      "left_top10": "Föll från första sidan: #{from} → #{to}",
+      "position_up": "Upp {delta} placeringar: #{from} → #{to}",
+      "position_down": "Ned {delta} placeringar: #{from} → #{to}",
+      "url_changed": "Google rankar nu en annan sida: {url}",
+      "feature_gained": "Ny SERP-funktion: {feature, select, ai_overview {AI-översikt} featured_snippet {Utvalt utdrag} people_also_ask {Andra frågar också} local_pack {Lokala resultat} video {Videor} images {Bilder} top_stories {Nyheter} knowledge_graph {Kunskapspanel} shopping {Shoppingresultat} related_searches {Relaterade sökningar} other {{raw}}}",
+      "feature_lost": "SERP-funktion försvann: {feature, select, ai_overview {AI-översikt} featured_snippet {Utvalt utdrag} people_also_ask {Andra frågar också} local_pack {Lokala resultat} video {Videor} images {Bilder} top_stories {Nyheter} knowledge_graph {Kunskapspanel} shopping {Shoppingresultat} related_searches {Relaterade sökningar} other {{raw}}}",
+      "ai_overview_cited": "Din webbplats citeras nu i AI-översikten",
+      "ai_overview_uncited": "Din webbplats citeras inte längre i AI-översikten",
+      "competitor_entered": "{domain} tog sig in på topp 10 (#{rank})",
+      "competitor_left": "{domain} föll ur topp 10 (var #{previousRank})"
+    }
   }
 }

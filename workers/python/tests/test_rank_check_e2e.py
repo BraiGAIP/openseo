@@ -200,6 +200,17 @@ class FakeDataForSEO:
             body = copy.deepcopy(self.serp)
             body["tasks"][0]["id"] = path.rsplit("/", 1)[-1]
             return httpx.Response(200, json=body)
+        if path == "/v3/dataforseo_labs/google/bulk_keyword_difficulty/live":
+            keywords = json.loads(request.content)[0]["keywords"]
+            items = [{"keyword": k.lower(), "keyword_difficulty": 37} for k in keywords]
+            return httpx.Response(
+                200,
+                json={
+                    "status_code": 20000,
+                    "cost": 0.0101,
+                    "tasks": [{"id": "kd", "status_code": 20000, "result": [{"items": items}]}],
+                },
+            )
         if path == "/v3/keywords_data/google_ads/search_volume/live":
             keywords = json.loads(request.content)[0]["keywords"]
             return httpx.Response(
@@ -462,3 +473,71 @@ async def test_falls_back_to_serper_when_dataforseo_fails(pg_dsn, seeded, serp_f
         assert [(u["quantity"], u["provider"], float(u["provider_cost_usd"])) for u in usage] == [
             (2, "serper", 0.002)
         ]
+
+
+async def test_second_day_records_serp_changes_and_keyword_difficulty(pg_dsn, seeded, serp_fixture):
+    """Day 1 → day 2: the tracked page drops out of the top 10, a competitor appears."""
+    fake = FakeDataForSEO(serp_fixture)
+    db = await Database.connect(pg_dsn, role="service_role", max_size=3)
+    client = httpx.AsyncClient(base_url="https://api.dataforseo.com", transport=httpx.MockTransport(fake))
+    provider = DataForSEOProvider("l", "p", client=client, store=DbPendingTaskStore(db), poll_interval=0)
+    ctx = RankCheckContext(db=db, provider=provider)
+    project = seeded["projects"][USER_A]
+    try:
+        with psycopg.connect(pg_dsn, autocommit=True, row_factory=dict_row) as conn:
+            kw_id = conn.execute(
+                "select id::text from public.keyword_tracking where project_id = %s", (project,)
+            ).fetchone()["id"]
+            yesterday = conn.execute("select current_date - 1 as d").fetchone()["d"]
+            # Day 1 baseline: rank 8 with a different URL, without the AI Overview citation.
+            conn.execute("set role service_role")
+            conn.execute(
+                """insert into public.keyword_positions
+                     (keyword_id, check_date, organization_id, project_id, position, url, serp_features,
+                      owns_ai_overview, provider, top_domains)
+                   values (%s, %s, gen_random_uuid(), gen_random_uuid(), 8, 'https://example-ev.com/old',
+                           '{people_also_ask,ai_overview}', false, 'dataforseo',
+                           '{wiki.test,example-ev.com,gone.test}')""",
+                (kw_id, yesterday),
+            )
+            conn.execute("reset role")
+        job = Job(
+            9001,
+            "rank_check",
+            seeded["orgs"][USER_A],
+            project,
+            {"keyword_ids": [kw_id], "check_date": date.today().isoformat()},
+            1,
+            5,
+        )
+        summary = await handle_rank_check(job, ctx)
+        again = await handle_rank_check(job, ctx)  # a re-check replaces the day's events
+    finally:
+        await client.aclose()
+        await db.close()
+
+    assert summary["changes"] == again["changes"] > 0
+    with psycopg.connect(pg_dsn, row_factory=dict_row) as conn:
+        events = conn.execute(
+            "select kind::text, subject, payload from public.keyword_events"
+            " where keyword_id = %s order by id",
+            (kw_id,),
+        ).fetchall()
+        got = {(e["kind"], e["subject"]) for e in events}
+        assert ("left_top10", "") in got  # 8 → 12
+        assert ("url_changed", "https://blog.example-ev.com/ev-battery-life") in got
+        assert ("ai_overview_cited", "") in got
+        assert ("competitor_left", "gone.test") in got
+        assert any(k == "competitor_entered" for k, _ in got)
+        assert len(events) == summary["changes"]  # no duplicates after the re-check
+        left = next(e for e in events if e["kind"] == "left_top10")
+        assert left["payload"] == {"from": 8, "to": 12}
+        row = conn.execute(
+            "select k.keyword_difficulty, p.top_domains from public.keyword_tracking k"
+            " join public.keyword_positions p on p.keyword_id = k.id and p.check_date = current_date"
+            " where k.id = %s",
+            (kw_id,),
+        ).fetchone()
+        assert row["keyword_difficulty"] == 37
+        # fixture: three organic results in the top 10, ours is at 12
+        assert row["top_domains"] == ["energy.gov", "caranddriver.com", "en.wikipedia.org"]

@@ -105,6 +105,17 @@ class SerpResult:
             return None
         return any(domain_matches(d, domain) for d in self.ai_overview_domains)
 
+    def top_domains(self, limit: int = 10) -> list[str]:
+        """Distinct organic domains in rank order (normalized, www. stripped)."""
+        seen: list[str] = []
+        for r in sorted(self.organic, key=lambda r: r.rank_group):
+            if r.rank_group > limit:
+                break
+            domain = normalize_domain(r.domain)
+            if domain and domain not in seen:
+                seen.append(domain)
+        return seen
+
     @property
     def serp_features(self) -> list[str]:
         return sorted({t for t in self.item_types if t != "organic"})
@@ -136,6 +147,8 @@ class KeywordMetrics:
     # 0–1 (Google Ads competition index / 100)
     competition: float | None = None
     monthly_searches: list[dict[str, int]] | None = None
+    # 0–100, chance of reaching the organic top 10 (DataForSEO Labs, logarithmic scale)
+    keyword_difficulty: int | None = None
 
 
 @dataclass

@@ -14,7 +14,7 @@ import {
 } from "recharts";
 import { deleteKeyword, loadKeywordHistory } from "@/app/[locale]/app/actions";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { assignSlots, MAX_CHART_SERIES, positionChange, SERIES_COLORS } from "@/lib/seo-metrics";
+import { assignSlots, difficultyLevel, MAX_CHART_SERIES, positionChange, SERIES_COLORS } from "@/lib/seo-metrics";
 import { cn } from "@/lib/utils";
 
 export type KeywordRow = {
@@ -22,6 +22,7 @@ export type KeywordRow = {
   keyword: string;
   device: string;
   search_volume: number | null;
+  keyword_difficulty: number | null;
   current_position: number | null;
   previous_position: number | null;
   best_position: number | null;
@@ -205,6 +206,11 @@ export function RankDashboard({ projectId, days, keywords, initialSelection, ini
                   <th scope="col" className="py-2 text-right font-normal">{t("col.change")}</th>
                   <th scope="col" className="py-2 text-right font-normal">{t("col.best")}</th>
                   <th scope="col" className="py-2 text-right font-normal">{t("col.volume")}</th>
+                  <th scope="col" className="py-2 text-right font-normal">
+                    <abbr title={t("col.difficultyLong")} className="no-underline">
+                      {t("col.difficulty")}
+                    </abbr>
+                  </th>
                   <th scope="col" className="py-2 pl-4 font-normal">{t("col.url")}</th>
                   <th scope="col" className="py-2 font-normal">{t("col.checked")}</th>
                   {canEdit && <th scope="col" className="w-10 py-2" />}
@@ -256,6 +262,9 @@ export function RankDashboard({ projectId, days, keywords, initialSelection, ini
                       <td className="py-2 text-right tabular-nums">
                         {k.search_volume != null ? format.number(k.search_volume) : "—"}
                       </td>
+                      <td className="py-2 text-right tabular-nums">
+                        <Difficulty value={k.keyword_difficulty} />
+                      </td>
                       <td className="max-w-64 truncate py-2 pl-4">
                         {k.current_url ? (
                           <a href={k.current_url} target="_blank" rel="noreferrer noopener" className="text-primary hover:underline">
@@ -295,6 +304,19 @@ export function RankDashboard({ projectId, days, keywords, initialSelection, ini
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+function Difficulty({ value }: { value: number | null }) {
+  const t = useTranslations("Project");
+  const level = difficultyLevel(value);
+  if (value == null || level == null) return <span className="text-subtle-foreground">—</span>;
+  const label = t(`difficulty.${level}`);
+  return (
+    <span title={label}>
+      {value}
+      <span className="ml-1.5 text-xs text-muted-foreground">{label}</span>
+    </span>
   );
 }
 

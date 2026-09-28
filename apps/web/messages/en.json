@@ -128,7 +128,9 @@
       "best": "Best",
       "volume": "Volume",
       "url": "Ranking URL",
-      "checked": "Last checked"
+      "checked": "Last checked",
+      "difficulty": "KD",
+      "difficultyLong": "Keyword difficulty (0–100): how hard it is to reach the top 10"
     },
     "notRanking": "Not in top {depth}",
     "notChecked": "Pending",
@@ -143,7 +145,13 @@
     "checkQueued": "{count, plural, one {# keyword} other {# keywords}} queued. Results in a few minutes.",
     "checkAvailableAt": "Next manual check available at {time}",
     "demoBadge": "Demo",
-    "demoNotice": "These rankings are simulated because no search data provider is connected yet. Real positions replace them on the next check once a provider is configured."
+    "demoNotice": "These rankings are simulated because no search data provider is connected yet. Real positions replace them on the next check once a provider is configured.",
+    "difficulty": {
+      "easy": "Easy",
+      "moderate": "Moderate",
+      "hard": "Hard",
+      "veryHard": "Very hard"
+    }
   },
   "Errors": {
     "generic": "Something went wrong. Please try again.",
@@ -155,5 +163,27 @@
     "cooldown": "A check is already running or ran recently. Try again later.",
     "noKeywords": "Add keywords first.",
     "quotaExceeded": "This month's {metric, select, serp_query {ranking check} audit_page {site audit} other {usage}} quota is used up. Upgrade to continue."
+  },
+  "Changes": {
+    "title": "SERP changes",
+    "hint": "What changed since each keyword's previous check.",
+    "empty": "No changes yet. Changes appear from the second check onwards.",
+    "kind": {
+      "started_ranking": "Started ranking at #{to}",
+      "stopped_ranking": "Dropped out of the checked results (was #{from})",
+      "entered_top3": "Entered the top 3: #{from} → #{to}",
+      "left_top3": "Left the top 3: #{from} → #{to}",
+      "entered_top10": "Reached page one: #{from} → #{to}",
+      "left_top10": "Dropped off page one: #{from} → #{to}",
+      "position_up": "Up {delta} places: #{from} → #{to}",
+      "position_down": "Down {delta} places: #{from} → #{to}",
+      "url_changed": "Google now ranks a different page: {url}",
+      "feature_gained": "New SERP feature: {feature, select, ai_overview {AI Overview} featured_snippet {Featured snippet} people_also_ask {People also ask} local_pack {Local pack} video {Videos} images {Images} top_stories {Top stories} knowledge_graph {Knowledge panel} shopping {Shopping results} related_searches {Related searches} other {{raw}}}",
+      "feature_lost": "SERP feature gone: {feature, select, ai_overview {AI Overview} featured_snippet {Featured snippet} people_also_ask {People also ask} local_pack {Local pack} video {Videos} images {Images} top_stories {Top stories} knowledge_graph {Knowledge panel} shopping {Shopping results} related_searches {Related searches} other {{raw}}}",
+      "ai_overview_cited": "Your site is now cited in the AI Overview",
+      "ai_overview_uncited": "Your site is no longer cited in the AI Overview",
+      "competitor_entered": "{domain} entered the top 10 (#{rank})",
+      "competitor_left": "{domain} left the top 10 (was #{previousRank})"
+    }
   }
 }

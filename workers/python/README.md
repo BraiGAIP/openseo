@@ -5,7 +5,7 @@ Background workers that consume the Postgres job queue (`public.jobs`) through t
 
 | Queue | Handler | What it does |
 |---|---|---|
-| `rank_check` | `openseo_workers/rank/handler.py` | Fetches Google SERPs for a batch of tracked keywords, stores `keyword_positions`, refreshes search volume / CPC / competition, meters usage |
+| `rank_check` | `openseo_workers/rank/handler.py` | Fetches Google SERPs for a batch of tracked keywords, stores `keyword_positions` (incl. top-10 domains), refreshes search volume / CPC / competition / keyword difficulty, records SERP change events (`rank/changes.py` → `keyword_events`), meters usage |
 
 ## Providers
 
@@ -22,6 +22,11 @@ a failed DataForSEO request (outage, auth, out of balance) is retried on Serper 
 Queued DataForSEO tasks that are merely slow are *not* a fallback case: the job is retried later and
 resumes polling. Positions keep the provider that produced them (`keyword_positions.provider`).
 If the keyword volume lookup fails, positions are still tracked and volumes are retried next run.
+
+**SERP changes:** after storing positions, each keyword is compared with its previous check
+(position jumps, top-3/top-10 crossings, SERP features, AI Overview citation, ranking URL,
+competitors in the top 10). Rules: `docs/ARCHITECTURE.md` §8.6. A same-day re-check replaces
+that day's events.
 
 **Manual checks** ("Check now" in the web app, `public.request_rank_check()`): jobs with
 `"manual": true` skip today's SERP cache and use DataForSEO's live endpoint (several requests in
@@ -49,6 +54,8 @@ Cost/robustness details:
 | `DATAFORSEO_MAX_WAIT` | `900` | Seconds to wait for queued tasks before retrying the job |
 | `SERPER_API_KEY` | – | serper.dev API key (fallback provider) |
 | `SERPER_COST_PER_CREDIT` | `0.001` | USD per Serper credit, for cost reporting |
+| `DATAFORSEO_KEYWORD_DIFFICULTY` | `true` | Keyword difficulty from DataForSEO Labs (`bulk_keyword_difficulty`) |
+| `RANK_JUMP_THRESHOLD` | `5` | Minimum move (places) reported as `position_up` / `position_down` |
 | `KEYWORD_METRICS_MAX_AGE_DAYS` | `30` | Refresh interval for search volume |
 
 ## Development

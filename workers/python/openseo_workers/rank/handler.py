@@ -12,8 +12,12 @@ Steps
      A failing metrics lookup is logged and skipped; it never blocks rank tracking.
   3. Build one SerpQuery per distinct (keyword, market, device, depth, domain); reuse
      today's cached SERPs, fetch the rest from the provider, cache them.
-  4. Upsert keyword_positions (the DB trigger refreshes the keyword snapshot).
-  5. Meter provider usage per organization (idempotent per job, never blocks tracking).
+  4. Upsert keyword_positions (the DB trigger refreshes the keyword snapshot: current,
+     previous and best position), including the organic top-10 domains.
+  5. Compare with each keyword's previous check and replace today's change events
+     (rank/changes.py): position jumps, top-3/top-10 crossings, SERP features,
+     AI Overview citation, ranking URL and competitors.
+  6. Meter provider usage per organization (idempotent per job, never blocks tracking).
 """
 
 from __future__ import annotations
@@ -34,6 +38,7 @@ from ..providers.base import (
     SerpResult,
     normalize_keyword,
 )
+from .changes import DEFAULT_JUMP_THRESHOLD, Snapshot, detect_changes
 
 log = logging.getLogger(__name__)
 
@@ -49,6 +54,7 @@ class RankCheckContext:
     db: Database
     provider: SerpProvider
     metrics_max_age_days: int = 30
+    jump_threshold: int = DEFAULT_JUMP_THRESHOLD
 
 
 async def handle_rank_check(job: Job, ctx: RankCheckContext) -> dict[str, Any]:
@@ -119,9 +125,27 @@ async def handle_rank_check(job: Job, ctx: RankCheckContext) -> dict[str, Any]:
                 "depth_checked": min(result.depth, 100),
                 "provider": result.provider,
                 "raw_ref": result.raw_ref,
+                "top_domains": result.top_domains(10),
             }
         )
+    previous = await ctx.db.fetch_previous_positions([r["keyword_id"] for r in rows], check_date)
     await ctx.db.upsert_positions(rows)
+
+    # ---- SERP changes since each keyword's previous check
+    domain_of = {kw["id"]: kw["domain"] for kw in keywords}
+    events_by_keyword = {
+        row["keyword_id"]: [
+            (e.kind, e.subject, e.payload)
+            for e in detect_changes(
+                Snapshot.from_row(previous[row["keyword_id"]]) if row["keyword_id"] in previous else None,
+                Snapshot.from_row(row),
+                domain_of[row["keyword_id"]],
+                ctx.jump_threshold,
+            )
+        ]
+        for row in rows
+    }
+    changes = await ctx.db.replace_events(check_date, events_by_keyword)
 
     # ---- usage: only SERPs this job actually paid for, attributed per organization
     pages_by_org: dict[str, int] = defaultdict(int)
@@ -158,6 +182,7 @@ async def handle_rank_check(job: Job, ctx: RankCheckContext) -> dict[str, Any]:
         "check_date": check_date.isoformat(),
         "checked": len(rows),
         "ranked": ranked,
+        "changes": changes,
         "serps_fetched": len(fetched),
         "serps_cached": len(queries) - len(to_fetch),
         "pages_crawled": sum(r.pages_crawled for r in fetched.values()),
