@@ -12,6 +12,16 @@ class ConfigError(RuntimeError):
     """Raised when the worker configuration is invalid."""
 
 
+def _secret(value: str | None) -> str | None:
+    """Credential from the environment, without surrounding whitespace.
+
+    str.strip() also removes Unicode separators such as U+2028 that copy-paste into
+    secret stores tends to add; left in place they make the provider reject the login.
+    """
+    value = (value or "").strip()
+    return value or None
+
+
 def _bool(value: str | None, default: bool = False) -> bool:
     if value is None or value == "":
         return default
@@ -59,7 +69,7 @@ class Settings:
     @classmethod
     def from_env(cls, env: Mapping[str, str] | None = None) -> Settings:
         env = os.environ if env is None else env
-        database_url = env.get("DATABASE_URL", "")
+        database_url = _secret(env.get("DATABASE_URL")) or ""
         if not database_url:
             raise ConfigError("DATABASE_URL is required")
 
@@ -81,8 +91,8 @@ class Settings:
             heartbeat_interval=float(env.get("HEARTBEAT_INTERVAL", defaults.heartbeat_interval)),
             db_role=(env.get("DB_ROLE", "service_role") or None),
             serp_provider=provider,  # type: ignore[arg-type]
-            dataforseo_login=env.get("DATAFORSEO_LOGIN") or None,
-            dataforseo_password=env.get("DATAFORSEO_PASSWORD") or None,
+            dataforseo_login=_secret(env.get("DATAFORSEO_LOGIN")),
+            dataforseo_password=_secret(env.get("DATAFORSEO_PASSWORD")),
             dataforseo_mode=mode,  # type: ignore[arg-type]
             dataforseo_base_url=env.get("DATAFORSEO_BASE_URL", defaults.dataforseo_base_url).rstrip("/"),
             dataforseo_max_wait=float(env.get("DATAFORSEO_MAX_WAIT", defaults.dataforseo_max_wait)),
@@ -92,7 +102,7 @@ class Settings:
             dataforseo_stop_on_match=_bool(env.get("DATAFORSEO_STOP_ON_MATCH"), True),
             dataforseo_keyword_difficulty=_bool(env.get("DATAFORSEO_KEYWORD_DIFFICULTY"), True),
             rank_jump_threshold=int(env.get("RANK_JUMP_THRESHOLD", defaults.rank_jump_threshold)),
-            serper_api_key=env.get("SERPER_API_KEY") or None,
+            serper_api_key=_secret(env.get("SERPER_API_KEY")),
             serper_base_url=env.get("SERPER_BASE_URL", defaults.serper_base_url).rstrip("/"),
             serper_cost_per_credit=Decimal(
                 env.get("SERPER_COST_PER_CREDIT", str(defaults.serper_cost_per_credit))

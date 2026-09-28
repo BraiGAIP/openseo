@@ -9,7 +9,8 @@ name: Deploy worker (Fly.io)
 #   DATAFORSEO_LOGIN     optional – without it the worker runs on mock data
 #   DATAFORSEO_PASSWORD  optional
 #   SERPER_API_KEY       optional – fallback SERP provider (serper.dev) if DataForSEO fails
-# Repository variable (optional): FLY_APP – app name if "braiseo-workers" is taken.
+# Repository variables (optional): FLY_APP – app name if "braiseo-workers" is taken;
+#                                  FLY_ORG – Fly organization slug (needed only with several orgs).
 #
 # Secrets present in GitHub are copied to Fly on every run; secrets you set
 # directly in Fly (fly secrets set) are left alone.
@@ -35,6 +36,7 @@ jobs:
         working-directory: workers/python
     env:
       FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+      FLY_ORG: ${{ vars.FLY_ORG }}
       FLY_APP: ${{ vars.FLY_APP || 'braiseo-workers' }}
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
       DATAFORSEO_LOGIN: ${{ secrets.DATAFORSEO_LOGIN }}
@@ -64,7 +66,17 @@ jobs:
               echo "::error::First deploy needs the DATABASE_URL repository secret."
               exit 1
             fi
-            flyctl apps create "$FLY_APP" --org personal
+            org="${FLY_ORG:-}"
+            if [ -z "$org" ]; then
+              orgs=$(flyctl orgs list --json | jq -r 'keys[]')
+              if [ "$(printf '%s\n' "$orgs" | grep -c .)" = 1 ]; then
+                org="$orgs"
+              else
+                echo "::error::Several Fly organizations ($(echo $orgs | tr ' ' ',')). Set the repository variable FLY_ORG to the one to use."
+                exit 1
+              fi
+            fi
+            flyctl apps create "$FLY_APP" --org "$org"
           fi
 
       - name: Stage secrets
