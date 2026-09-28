@@ -5,6 +5,7 @@ Updated: 2026-09-28. This file is the shared starting point for Claude Code and 
 ## Where the work stands
 
 - Repository: [BraiGAIP/openseo](https://github.com/BraiGAIP/openseo)
+- Handoff instructions branch: `codex/continuity-checkpoints` (merge into `main` before expecting every new Claude/Codex session to read these instructions).
 - Main branch at inspection: `6880197d8979b28dd43ad8166f11f70916b78123` (PR #1 merged).
 - Latest detailed report: [2026-09-28 phase 1c](2026-09-28-session-report-phase-1c.md).
 - Product name: **BraiSEO**. Internal repository and package names still use `openseo`.
