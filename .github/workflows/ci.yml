@@ -74,4 +74,8 @@ jobs:
           for i in $(seq 1 20); do curl -sf -o /dev/null http://127.0.0.1:3000/fi && break; sleep 1; done
           test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/fi)" = 200
           test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/app)" = 307
+          # Magic-link callback must redirect to the public site URL, not the container address (0.0.0.0).
+          location=$(curl -s -o /dev/null -w '%{redirect_url}' "http://127.0.0.1:3000/auth/callback?code=x")
+          echo "callback → $location"
+          case "$location" in http://localhost:3000/*) ;; *) exit 1 ;; esac
           test "$(docker exec web id -u)" = 10001
