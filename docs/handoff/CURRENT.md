@@ -1,6 +1,17 @@
 # BraiSEO — current handoff
 
-Updated: 2026-09-28, 17:33 EEST. Shared starting point for Claude Code and Codex.
+Updated: 2026-10-31. Shared starting point for Claude Code and Codex.
+
+## 2026-10-31 decision and checkpoint
+
+- The owner chose to continue BraiSEO from this repository, `BraiGAIP/openseo`. The separate `BraiGAIP/braiseo` Cloudflare fork is not the working baseline; its last deploy failed because Cloudflare Access was not enabled.
+- This documentation checkpoint is on [`codex/resume-openseo-20261031`](https://github.com/BraiGAIP/openseo/tree/codex/resume-openseo-20261031), based on `main` commit `6ef101dec929a6ad4848809e0b229d68b35d75f5`. It changes no application code or production configuration.
+- [PR #5](https://github.com/BraiGAIP/openseo/pull/5) was squash-merged into `main` as `6ff4110379b853d6df1ec47b54eee8fb532f9296`. It fixes the Fly magic-link callback redirect to `0.0.0.0`. The [web deployment](https://github.com/BraiGAIP/openseo/actions/runs/41196738109) and [main CI](https://github.com/BraiGAIP/openseo/actions/runs/41196738095) passed on 31 October; the deployment smoke test returned `https://braiseo-web.fly.dev/fi → 200`.
+- The OpenSEO Supabase project `itxtluifqbxxrealkpfj` is active. Its applied migrations are the six `openseo_*` migrations from 27–28 September. The earlier `tenant_foundation` files are preserved in the [BraiSEO Drive folder](https://drive.google.com/drive/folders/1vKk-t73spyFZUPzapKaBRHi6geiVX4-Y); that migration is not applied and should not replace the current schema.
+- Next: inspect the Supabase Auth Site URL and redirect allow-list, verify a real email-link sign-in and a complete rank check. The `/fi` smoke test passed on 31 October; end-to-end login and worker/data flow remain unverified.
+- Checks for this checkpoint: GitHub PR #5 diff and CI, successful Fly web deployment and `/fi` smoke test, Supabase project and migration list. No new runtime tests for this docs-only branch. Blocker for end-to-end verification: current Auth redirect settings and a real email-link sign-in.
+
+## Historical handoff (2026-09-28)
 
 ## Repository and checkpoint
 
